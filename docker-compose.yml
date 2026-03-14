@@ -10,7 +10,7 @@ x-mongo-common: &mongo-common
     timeout: 5s
     retries: 10
 
-x-mongo-uri: &mongo-uri "mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0"
+x-mongo-uri: &mongo-uri "mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest"
 
 services:
   mongo1:
@@ -69,7 +69,7 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - HHH_CONTRACTS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0
+      - HHH_CONTRACTS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
     depends_on:
       mongo1:
         condition: service_healthy
@@ -81,7 +81,7 @@ services:
     ports:
       - "8002:8002"
     environment:
-      - HHH_SHIPS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0
+      - HHH_SHIPS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
     depends_on:
       mongo1:
         condition: service_healthy
@@ -93,7 +93,7 @@ services:
     ports:
       - "8003:8003"
     environment:
-      - HHH_MAPS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0
+      - HHH_MAPS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
     depends_on:
       mongo1:
         condition: service_healthy
@@ -105,7 +105,7 @@ services:
     ports:
       - "8004:8004"
     environment:
-      - HHH_GRAPHS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0
+      - HHH_GRAPHS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
     depends_on:
       mongo1:
         condition: service_healthy
@@ -117,7 +117,7 @@ services:
     ports:
       - "8005:8005"
     environment:
-      - HHH_ROUTES_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0
+      - HHH_ROUTES_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
       - HHH_ROUTES_CONTRACTS_SERVICE_URL=http://contracts-service:8001
       - HHH_ROUTES_SHIPS_SERVICE_URL=http://ships-service:8002
       - HHH_ROUTES_MAPS_SERVICE_URL=http://maps-service:8003
@@ -141,7 +141,7 @@ services:
     ports:
       - "8006:8006"
     environment:
-      - HHH_AUTH_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0
+      - HHH_AUTH_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
       - HHH_AUTH_JWT_SECRET=${HHH_AUTH_JWT_SECRET:-change-me-in-production}
     depends_on:
       mongo1:
