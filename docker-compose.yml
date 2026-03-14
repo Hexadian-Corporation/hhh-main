@@ -1,0 +1,89 @@
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  contracts-service:
+    build: ./hhh-contracts-service
+    ports:
+      - "8001:8001"
+    environment:
+      - HHH_CONTRACTS_MONGO_URI=mongodb://mongodb:27017
+    depends_on:
+      - mongodb
+
+  ships-service:
+    build: ./hhh-ships-service
+    ports:
+      - "8002:8002"
+    environment:
+      - HHH_SHIPS_MONGO_URI=mongodb://mongodb:27017
+    depends_on:
+      - mongodb
+
+  maps-service:
+    build: ./hhh-maps-service
+    ports:
+      - "8003:8003"
+    environment:
+      - HHH_MAPS_MONGO_URI=mongodb://mongodb:27017
+    depends_on:
+      - mongodb
+
+  graphs-service:
+    build: ./hhh-graphs-service
+    ports:
+      - "8004:8004"
+    environment:
+      - HHH_GRAPHS_MONGO_URI=mongodb://mongodb:27017
+    depends_on:
+      - mongodb
+
+  routes-service:
+    build: ./hhh-routes-service
+    ports:
+      - "8005:8005"
+    environment:
+      - HHH_ROUTES_MONGO_URI=mongodb://mongodb:27017
+      - HHH_ROUTES_CONTRACTS_SERVICE_URL=http://contracts-service:8001
+      - HHH_ROUTES_SHIPS_SERVICE_URL=http://ships-service:8002
+      - HHH_ROUTES_MAPS_SERVICE_URL=http://maps-service:8003
+      - HHH_ROUTES_GRAPHS_SERVICE_URL=http://graphs-service:8004
+    depends_on:
+      - mongodb
+      - contracts-service
+      - ships-service
+      - maps-service
+      - graphs-service
+
+  auth-service:
+    build: ./hhh-auth-service
+    ports:
+      - "8006:8006"
+    environment:
+      - HHH_AUTH_MONGO_URI=mongodb://mongodb:27017
+      - HHH_AUTH_JWT_SECRET=${HHH_AUTH_JWT_SECRET:-change-me-in-production}
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./hhh-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - contracts-service
+      - ships-service
+      - routes-service
+
+  backoffice-frontend:
+    build: ./hhh-backoffice-frontend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - auth-service
+
+volumes:
+  mongo_data:
