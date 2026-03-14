@@ -5,6 +5,11 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   contracts-service:
     build: ./hhh-contracts-service
@@ -13,7 +18,8 @@ services:
     environment:
       - HHH_CONTRACTS_MONGO_URI=mongodb://mongodb:27017
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
 
   ships-service:
     build: ./hhh-ships-service
@@ -22,7 +28,8 @@ services:
     environment:
       - HHH_SHIPS_MONGO_URI=mongodb://mongodb:27017
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
 
   maps-service:
     build: ./hhh-maps-service
@@ -31,7 +38,8 @@ services:
     environment:
       - HHH_MAPS_MONGO_URI=mongodb://mongodb:27017
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
 
   graphs-service:
     build: ./hhh-graphs-service
@@ -40,7 +48,8 @@ services:
     environment:
       - HHH_GRAPHS_MONGO_URI=mongodb://mongodb:27017
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
 
   routes-service:
     build: ./hhh-routes-service
@@ -53,11 +62,16 @@ services:
       - HHH_ROUTES_MAPS_SERVICE_URL=http://maps-service:8003
       - HHH_ROUTES_GRAPHS_SERVICE_URL=http://graphs-service:8004
     depends_on:
-      - mongodb
-      - contracts-service
-      - ships-service
-      - maps-service
-      - graphs-service
+      mongodb:
+        condition: service_healthy
+      contracts-service:
+        condition: service_started
+      ships-service:
+        condition: service_started
+      maps-service:
+        condition: service_started
+      graphs-service:
+        condition: service_started
 
   auth-service:
     build: ./hhh-auth-service
@@ -67,7 +81,8 @@ services:
       - HHH_AUTH_MONGO_URI=mongodb://mongodb:27017
       - HHH_AUTH_JWT_SECRET=${HHH_AUTH_JWT_SECRET:-change-me-in-production}
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
 
   frontend:
     build: ./hhh-frontend
@@ -77,6 +92,7 @@ services:
       - contracts-service
       - ships-service
       - routes-service
+      - auth-service
 
   backoffice-frontend:
     build: ./hhh-backoffice-frontend

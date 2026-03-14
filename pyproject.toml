@@ -1,0 +1,15 @@
+[project]
+name = "hhh"
+version = "0.1.0"
+description = "H³ – Hexadian Hauling Helper – CLI and workspace orchestration"
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+hhh = "hhh_cli:main"
+test = "hhh_cli:run_tests"
+lint = "hhh_cli:run_lint"

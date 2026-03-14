@@ -22,39 +22,72 @@ Microservices with hexagonal architecture (Ports & Adapters), each service in it
 - **Backend**: Python 3.11+, FastAPI, opyoid, pymongo, pydantic
 - **Frontend**: React 19, TypeScript, Vite 8
 - **Database**: MongoDB (database-per-service)
-- **Infrastructure**: Docker, docker-compose, uv
+- **Tooling**: uv, Docker, docker-compose
 
-## Quick Start
+## Prerequisites
 
-### Clone with submodules
+- [uv](https://docs.astral.sh/uv/) (Python package & project manager)
+- [Docker](https://www.docker.com/) (for containerized deployment)
+
+## Quick Start (first use)
+
+Two commands. On a fresh machine, all you need is:
 
 ```bash
 git clone --recurse-submodules https://github.com/Hexadian-Corporation/hhh-main.git
 cd hhh-main
+uv run hhh up
 ```
 
-### Setup (installs all dependencies)
+This does everything automatically:
+1. Initializes Git submodules
+2. Builds a Docker image for each component
+3. Starts **9 containers**: MongoDB + 6 backends + 2 frontends
+
+Result:
+
+| Component | URL |
+|---|---|
+| **Frontend** | http://localhost:3000 |
+| **Backoffice** | http://localhost:3001 |
+| Contracts API | http://localhost:8001/docs |
+| Ships API | http://localhost:8002/docs |
+| Maps API | http://localhost:8003/docs |
+| Graphs API | http://localhost:8004/docs |
+| Routes API | http://localhost:8005/docs |
+| Auth API | http://localhost:8006/docs |
+
+## CLI Reference
+
+All operations go through `uv run hhh`:
+
+| Command | Description |
+|---|---|
+| `uv run hhh up` | **First use**: submodules + build + start everything in Docker |
+| `uv run hhh down` | Stop all containers |
+| `uv run hhh logs` | Follow logs from all containers |
+| `uv run hhh ps` | Show status of each container |
+| `uv run hhh setup` | Local setup (submodules + uv sync + npm install) |
+| `uv run hhh sync` | Sync Python dependencies |
+| `uv run hhh start` | Start backends locally (no Docker) |
+| `uv run test` | Run tests for all services |
+| `uv run lint` | Run linter for all services |
+| `uv run hhh --help` | Show available commands |
+
+## Local Development (no Docker)
+
+For development with hot-reload on an individual service:
 
 ```bash
-# Linux / macOS
-./scripts/setup.sh
-
-# Windows (PowerShell)
-.\scripts\setup.ps1
-```
-
-### Run with Docker
-
-```bash
-docker compose up --build
-```
-
-### Run individually
-
-```bash
+uv run hhh setup       # first time only
 cd hhh-contracts-service
-uv sync
 uv run uvicorn src.main:app --reload --port 8001
+```
+
+Or to start all backends locally at once:
+
+```bash
+uv run hhh start
 ```
 
 ## Submodule Management
