@@ -1,0 +1,55 @@
+# Labels managed by the sync-labels workflow.
+# Any change here is applied to all target repositories listed in
+# .github/workflows/sync-labels.yml.
+
+- name: domain
+  color: "0075ca"
+  description: "Domain / business-logic layer"
+
+- name: api
+  color: "d876e3"
+  description: "API / adapter layer"
+
+- name: persistence
+  color: "f9d0c4"
+  description: "Persistence / database layer"
+
+- name: backend
+  color: "0e8a16"
+  description: "Backend services"
+
+- name: frontend
+  color: "1d76db"
+  description: "Frontend applications"
+
+- name: setup
+  color: "c5def5"
+  description: "Project setup and configuration"
+
+- name: testing
+  color: "bfd4f2"
+  description: "Tests and test infrastructure"
+
+- name: feature
+  color: "a2eeef"
+  description: "New feature"
+
+- name: enhancement
+  color: "84b6eb"
+  description: "Improvement to existing functionality"
+
+- name: backoffice
+  color: "fbca04"
+  description: "Back-office / admin panel"
+
+- name: "priority:high"
+  color: "b60205"
+  description: "High priority"
+
+- name: "priority:medium"
+  color: "ff9f1c"
+  description: "Medium priority"
+
+- name: project-management
+  color: "d4c5f9"
+  description: "Project management and planning"
