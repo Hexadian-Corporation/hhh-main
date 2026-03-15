@@ -19,6 +19,8 @@ services:
       - "27017:27017"
     volumes:
       - mongo1_data:/data/db
+    networks:
+      - hhh-inner-net
 
   mongo2:
     <<: *mongo-common
@@ -26,6 +28,8 @@ services:
       - "27018:27017"
     volumes:
       - mongo2_data:/data/db
+    networks:
+      - hhh-inner-net
 
   mongo3:
     <<: *mongo-common
@@ -33,6 +37,8 @@ services:
       - "27019:27017"
     volumes:
       - mongo3_data:/data/db
+    networks:
+      - hhh-inner-net
 
   mongo-init:
     image: mirror.gcr.io/library/mongo:7
@@ -47,6 +53,8 @@ services:
       mongo3:
         condition: service_healthy
     restart: "no"
+    networks:
+      - hhh-inner-net
     entrypoint: ["mongosh", "--host", "mongo1:27017", "--eval", "
       try {
         rs.status();
@@ -76,7 +84,8 @@ services:
       mongo-init:
         condition: service_completed_successfully
     networks:
-      - default
+      - hhh-inner-net
+      - hhh-outer-net
       - hexadian-net
 
   ships-service:
@@ -91,7 +100,8 @@ services:
       mongo-init:
         condition: service_completed_successfully
     networks:
-      - default
+      - hhh-inner-net
+      - hhh-outer-net
       - hexadian-net
 
   maps-service:
@@ -106,7 +116,8 @@ services:
       mongo-init:
         condition: service_completed_successfully
     networks:
-      - default
+      - hhh-inner-net
+      - hhh-outer-net
       - hexadian-net
 
   graphs-service:
@@ -121,7 +132,8 @@ services:
       mongo-init:
         condition: service_completed_successfully
     networks:
-      - default
+      - hhh-inner-net
+      - hhh-outer-net
       - hexadian-net
 
   routes-service:
@@ -148,7 +160,8 @@ services:
       graphs-service:
         condition: service_started
     networks:
-      - default
+      - hhh-inner-net
+      - hhh-outer-net
       - hexadian-net
 
   commodities-service:
@@ -163,7 +176,8 @@ services:
       mongo-init:
         condition: service_completed_successfully
     networks:
-      - default
+      - hhh-inner-net
+      - hhh-outer-net
       - hexadian-net
 
   frontend:
@@ -173,14 +187,27 @@ services:
     depends_on:
       - contracts-service
       - ships-service
+      - maps-service
+      - graphs-service
       - routes-service
+      - commodities-service
+    networks:
+      - hhh-outer-net
+      - hexadian-net
 
   backoffice-frontend:
     build: ./hhh-backoffice-frontend
     ports:
       - "3001:3001"
+    depends_on:
+      - contracts-service
+      - ships-service
+      - maps-service
+      - graphs-service
+      - routes-service
+      - commodities-service
     networks:
-      - default
+      - hhh-outer-net
       - hexadian-net
 
 volumes:
@@ -189,5 +216,10 @@ volumes:
   mongo3_data:
 
 networks:
+  hhh-inner-net:
+    name: hexadian-hauling-helper-inner-net
+    internal: true
+  hhh-outer-net:
+    name: hexadian-hauling-helper-outer-net
   hexadian-net:
-    name: hexadian-net
+    name: hexadian-shared-net
