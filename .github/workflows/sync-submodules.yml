@@ -23,7 +23,29 @@ jobs:
       - name: Update submodules to latest main
         run: git submodule update --remote --merge
 
-      - name: Check for changes
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Update lockfiles in Python services
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          for svc in hhh-contracts-service hhh-ships-service hhh-maps-service hhh-graphs-service hhh-routes-service hhh-auth-service; do
+            echo "── $svc ──"
+            cd "$svc"
+            uv sync
+            if ! git diff --quiet; then
+              git add uv.lock
+              git commit -m "chore: update lockfile"
+              git push
+              echo "  -> lockfile updated and pushed"
+            else
+              echo "  -> up to date"
+            fi
+            cd ..
+          done
+
+      - name: Check for ref changes
         id: changes
         run: |
           if git diff --quiet; then
@@ -34,11 +56,9 @@ jobs:
             git diff --submodule=short >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Commit and push
+      - name: Commit and push updated refs
         if: steps.changes.outputs.changed == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "chore: sync submodule refs to latest main"
           git push

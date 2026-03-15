@@ -68,7 +68,7 @@ All operations go through `uv run hhh`:
 | `uv run hhh logs` | Follow logs from all containers |
 | `uv run hhh ps` | Show status of each container |
 | `uv run hhh setup` | Local setup (submodules + uv sync + npm install) |
-| `uv run hhh sync` | Sync Python dependencies |
+| `uv run hhh sync` | **Pull latest + update submodules + sync all deps** |
 | `uv run hhh start` | Start backends locally (no Docker) |
 | `uv run test` | Run tests for all services |
 | `uv run lint` | Run linter for all services |

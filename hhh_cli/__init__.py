@@ -29,8 +29,8 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # ── helpers ──────────────────────────────────────────────────────────
 
-def _run(args: list[str], *, cwd: Path | None = None) -> int:
-    return subprocess.run(args, cwd=cwd).returncode
+def _run(args: list[str], *, cwd: Path | None = None, shell: bool = False) -> int:
+    return subprocess.run(args, cwd=cwd, shell=shell).returncode
 
 
 def _sync_service(svc_dir: Path) -> bool:
@@ -74,7 +74,7 @@ def setup() -> None:
         if not fe_dir.exists():
             continue
         print(f"  -> {fe_name}")
-        _run(["npm", "install"], cwd=fe_dir)
+        _run(["npm", "install"], cwd=fe_dir, shell=True)
 
     print("\n=== Setup complete! ===")
     print("  Run services:  uv run hhh start")
@@ -83,8 +83,19 @@ def setup() -> None:
 
 
 def sync() -> None:
-    """Sync dependencies for all Python services."""
-    print("=== H³ – Syncing all services ===")
+    """Pull latest changes, update submodules, and sync dependencies."""
+    print("=== H³ – Syncing everything ===")
+
+    # 1. Pull latest main repo + submodule refs
+    print("\n── Git pull (with submodules) ──")
+    _run(["git", "pull", "--recurse-submodules"], cwd=ROOT)
+
+    # 2. Update submodules to latest remote main
+    print("\n── Updating submodules to latest main ──")
+    _run(["git", "submodule", "update", "--remote", "--merge"], cwd=ROOT)
+
+    # 3. Sync Python dependencies
+    print("\n── Syncing Python dependencies ──")
     failed: list[str] = []
     for svc_name, _ in SERVICES:
         svc_dir = ROOT / svc_name
@@ -93,10 +104,52 @@ def sync() -> None:
         print(f"  -> {svc_name}")
         if not _sync_service(svc_dir):
             failed.append(svc_name)
+
+    # 4. Install frontend dependencies
+    print("\n── Syncing frontend dependencies ──")
+    for fe_name, _ in FRONTENDS:
+        fe_dir = ROOT / fe_name
+        if not fe_dir.exists():
+            continue
+        print(f"  -> {fe_name}")
+        if _run(["npm", "install"], cwd=fe_dir, shell=True) != 0:
+            print("    (failed — is npm installed?")
+
     if failed:
         print(f"\nFailed to sync: {', '.join(failed)}")
         sys.exit(1)
-    print("\nAll services synced!")
+
+    # 5. Commit lockfile changes in submodules
+    print("\n── Committing lockfile updates ──")
+    all_modules = [(n, None) for n, _ in SERVICES] + [(n, None) for n, _ in FRONTENDS]
+    for mod_name, _ in all_modules:
+        mod_dir = ROOT / mod_name
+        if not mod_dir.exists():
+            continue
+        # Check if there are lockfile changes to commit
+        rc = subprocess.run(
+            ["git", "diff", "--quiet"], cwd=mod_dir,
+        ).returncode
+        if rc != 0:
+            print(f"  -> {mod_name}: committing lockfile updates")
+            _run(["git", "add", "-A"], cwd=mod_dir)
+            _run(["git", "commit", "-m", "chore: update lockfile"], cwd=mod_dir)
+            _run(["git", "push"], cwd=mod_dir)
+        else:
+            print(f"  -> {mod_name}: up to date")
+
+    # 6. Update submodule refs in hhh-main
+    print("\n── Updating submodule refs in hhh-main ──")
+    rc = subprocess.run(["git", "diff", "--quiet"], cwd=ROOT).returncode
+    if rc != 0:
+        _run(["git", "add", "-A"], cwd=ROOT)
+        _run(["git", "commit", "-m", "chore: sync submodule refs"], cwd=ROOT)
+        _run(["git", "push"], cwd=ROOT)
+        print("  -> refs updated and pushed")
+    else:
+        print("  -> refs already up to date")
+
+    print("\nAll synced!")
 
 
 def start() -> None:
