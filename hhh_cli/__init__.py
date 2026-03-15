@@ -432,8 +432,12 @@ def logs() -> None:
 
 
 def ps() -> None:
-    """Show status of all containers."""
-    sys.exit(_run(["docker", "compose", "ps"], cwd=ROOT))
+    """Show status of all containers (including standalone auth)."""
+    _ensure_auth(silent=True)
+    _run(["docker", "compose", "ps"], cwd=ROOT)
+    if AUTH_DIR.exists():
+        print("\n── Auth service (standalone) ──")
+        _run(["docker", "compose", "ps"], cwd=AUTH_DIR)
 
 
 def run_tests() -> None:
@@ -485,7 +489,7 @@ def restart(service_name: str) -> None:
     """
     sub_dir, compose_name = _resolve_service(service_name)
     print(f"=== H³ – Restarting {compose_name} ===\n")
-
+    _ensure_auth(silent=True)
     print(f"  -> Rebuilding {compose_name}...")
     code = _run(
         ["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name],
@@ -510,6 +514,8 @@ def sync_service(service_name: str) -> None:
         sys.exit(1)
 
     print(f"=== H³ – Syncing {sub_dir} ===\n")
+
+    _ensure_auth(silent=True)
 
     # 1. Update the single submodule
     print(f"[1/3] Updating submodule {sub_dir}...")
@@ -557,6 +563,8 @@ def hotdeploy() -> None:
     Usage: uv run hhh hotdeploy
     """
     print("=== H\xb3 \u2013 Hot Deploy ===\n")
+
+    _ensure_auth(silent=True)
 
     # 1. Detect which submodules have upstream changes
     print("\u2500\u2500 Checking submodules for upstream changes \u2500\u2500\n")

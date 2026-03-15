@@ -75,6 +75,9 @@ services:
         condition: service_healthy
       mongo-init:
         condition: service_completed_successfully
+    networks:
+      - default
+      - hexadian-net
 
   ships-service:
     build: ./hhh-ships-service
@@ -87,6 +90,9 @@ services:
         condition: service_healthy
       mongo-init:
         condition: service_completed_successfully
+    networks:
+      - default
+      - hexadian-net
 
   maps-service:
     build: ./hhh-maps-service
@@ -99,6 +105,9 @@ services:
         condition: service_healthy
       mongo-init:
         condition: service_completed_successfully
+    networks:
+      - default
+      - hexadian-net
 
   graphs-service:
     build: ./hhh-graphs-service
@@ -111,6 +120,9 @@ services:
         condition: service_healthy
       mongo-init:
         condition: service_completed_successfully
+    networks:
+      - default
+      - hexadian-net
 
   routes-service:
     build: ./hhh-routes-service
@@ -135,6 +147,9 @@ services:
         condition: service_started
       graphs-service:
         condition: service_started
+    networks:
+      - default
+      - hexadian-net
 
   commodities-service:
     build: ./hhh-commodities-service
@@ -147,6 +162,9 @@ services:
         condition: service_healthy
       mongo-init:
         condition: service_completed_successfully
+    networks:
+      - default
+      - hexadian-net
 
   frontend:
     build: ./hhh-frontend
@@ -166,3 +184,7 @@ volumes:
   mongo1_data:
   mongo2_data:
   mongo3_data:
+
+networks:
+  hexadian-net:
+    name: hexadian-net
