@@ -41,10 +41,13 @@ uv run hhh up
 
 This does everything automatically:
 1. Initializes Git submodules
-2. Builds a Docker image for each component
-4. Starts **12 containers**: 3× MongoDB (replica set) + 6 backends + 2 frontends + 1 replica-set init
+2. Starts the auth service (standalone, with its own MongoDB)
+3. Builds and starts all H³ containers
 
-> **Note:** The auth service (`hexadian-auth-service`) runs independently with its own MongoDB — see [hexadian-auth-service](https://github.com/Hexadian-Corporation/hexadian-auth-service) for standalone setup.
+> The auth service (`hexadian-auth-service`) is auto-started by the CLI from `../hexadian-auth-service/`. Clone it with:
+> ```bash
+> git clone git@github.com:Hexadian-Corporation/hexadian-auth-service.git ../hexadian-auth-service
+> ```
 
 Result:
 
@@ -58,6 +61,7 @@ Result:
 | Graphs API | http://localhost:8004/docs |
 | Routes API | http://localhost:8005/docs |
 | Commodities API | http://localhost:8007/docs |
+| Auth API (standalone) | http://localhost:8006/docs |
 
 ## CLI Reference
 
@@ -65,8 +69,8 @@ All operations go through `uv run hhh`:
 
 | Command | Description |
 |---|---|
-| `uv run hhh up` | **First use**: submodules + build + start everything in Docker |
-| `uv run hhh down` | Stop all containers |
+| `uv run hhh up` | **First use**: submodules + auth + build + start everything in Docker |
+| `uv run hhh down` | Stop all containers (including standalone auth) |
 | `uv run hhh restart <service>` | Rebuild + restart a single service container |
 | `uv run hhh logs [service]` | Follow logs (all containers, or a single one) |
 | `uv run hhh ps` | Show status of each container |
@@ -81,7 +85,7 @@ All operations go through `uv run hhh`:
 
 **Service aliases** (used with `restart`, `sync`, `logs`):
 
-`contracts` · `ships` · `maps` · `graphs` · `routes` · `auth` · `commodities` · `frontend` · `backoffice`
+`contracts` · `ships` · `maps` · `graphs` · `routes` · `commodities` · `frontend` · `backoffice`
 
 Example: `uv run hhh restart contracts` rebuilds and restarts only the contracts-service container.
 
