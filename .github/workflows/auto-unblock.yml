@@ -15,19 +15,16 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Check and unblock tasks
+        shell: bash
         run: |
-          set -euo pipefail
-
           ORG="Hexadian-Corporation"
           PROJECT_ID="PVT_kwDOD_yaZ84BRv-S"
           STATUS_FIELD_ID="PVTSSF_lADOD_yaZ84BRv-Szg_fF9E"
           BLOCKED_ID="fbfa34a2"
           READY_ID="3a8dc8b6"
 
-          # Fetch all project items with status, issue body, repo, and number
+          # Fetch all project items
           items_json=$(gh api graphql -f query='
             query {
               node(id: "'"$PROJECT_ID"'") {
@@ -55,14 +52,19 @@ jobs:
             }
           ')
 
-          # Extract blocked items
-          blocked_items=$(echo "$items_json" | jq -c '
+          if [ -z "$items_json" ]; then
+            echo "::error::Failed to fetch project items"
+            exit 1
+          fi
+
+          # Extract blocked items into a temp file (avoids subshell pipe issue)
+          echo "$items_json" | jq -c '
             [.data.node.items.nodes[] |
              select(.fieldValueByName.optionId == "'"$BLOCKED_ID"'") |
              select(.content.number != null)]
-          ')
+          ' > /tmp/blocked.json
 
-          count=$(echo "$blocked_items" | jq 'length')
+          count=$(jq 'length' /tmp/blocked.json)
           echo "Found $count blocked items"
 
           if [ "$count" -eq 0 ]; then
@@ -70,57 +72,52 @@ jobs:
             exit 0
           fi
 
-          # Build a lookup of all project issues: "PREFIX-NUMBER" -> state
-          # We need to map repo names to prefixes
-          all_items=$(echo "$items_json" | jq -c '
-            [.data.node.items.nodes[] | select(.content.number != null)]
-          ')
-
-          # Function to resolve prefix from repo name
+          # Resolve repo name to issue prefix
           resolve_prefix() {
             case "$1" in
-              hhh-contracts-service)  echo "CS" ;;
-              hhh-ships-service)      echo "SHIPS" ;;
-              hhh-maps-service)       echo "MAPS" ;;
-              hhh-graphs-service)     echo "GRAPHS" ;;
-              hhh-routes-service)     echo "ROUTES" ;;
-              hhh-auth-service)       echo "AUTH" ;;
-              hhh-frontend)           echo "FE" ;;
+              hhh-contracts-service)   echo "CS" ;;
+              hhh-ships-service)       echo "SHIPS" ;;
+              hhh-maps-service)        echo "MAPS" ;;
+              hhh-graphs-service)      echo "GRAPHS" ;;
+              hhh-routes-service)      echo "ROUTES" ;;
+              hhh-auth-service)        echo "AUTH" ;;
+              hhh-frontend)            echo "FE" ;;
               hhh-backoffice-frontend) echo "BO" ;;
-              hhh-main)              echo "MAIN" ;;
-              *)                     echo "" ;;
+              hhh-main)               echo "MAIN" ;;
+              *)                      echo "" ;;
             esac
           }
 
-          # Function to resolve repo from prefix
+          # Resolve issue prefix to repo name
           resolve_repo() {
             case "$1" in
-              CS)     echo "hhh-contracts-service" ;;
-              SHIPS)  echo "hhh-ships-service" ;;
-              MAPS|SETUP) echo "hhh-maps-service" ;;
-              GRAPHS) echo "hhh-graphs-service" ;;
-              ROUTES) echo "hhh-routes-service" ;;
-              AUTH)   echo "hhh-auth-service" ;;
-              FE)     echo "hhh-frontend" ;;
-              BO)     echo "hhh-backoffice-frontend" ;;
-              MAIN)   echo "hhh-main" ;;
-              *)      echo "" ;;
+              CS)          echo "hhh-contracts-service" ;;
+              SHIPS)       echo "hhh-ships-service" ;;
+              MAPS|SETUP)  echo "hhh-maps-service" ;;
+              GRAPHS)      echo "hhh-graphs-service" ;;
+              ROUTES)      echo "hhh-routes-service" ;;
+              AUTH)        echo "hhh-auth-service" ;;
+              FE)          echo "hhh-frontend" ;;
+              BO)          echo "hhh-backoffice-frontend" ;;
+              MAIN)        echo "hhh-main" ;;
+              *)           echo "" ;;
             esac
           }
 
-          # Process each blocked item
-          echo "$blocked_items" | jq -c '.[]' | while IFS= read -r item; do
-            item_id=$(echo "$item" | jq -r '.id')
-            repo_name=$(echo "$item" | jq -r '.content.repository.name')
-            issue_number=$(echo "$item" | jq -r '.content.number')
-            body=$(echo "$item" | jq -r '.content.body // ""')
+          # Process each blocked item using a for loop (no subshell)
+          num_items=$(jq 'length' /tmp/blocked.json)
+          for (( i=0; i<num_items; i++ )); do
+            item_id=$(jq -r ".[$i].id" /tmp/blocked.json)
+            repo_name=$(jq -r ".[$i].content.repository.name" /tmp/blocked.json)
+            issue_number=$(jq -r ".[$i].content.number" /tmp/blocked.json)
+            body=$(jq -r ".[$i].content.body // \"\"" /tmp/blocked.json)
 
             prefix=$(resolve_prefix "$repo_name")
             echo ""
             echo "=== Checking ${prefix}-${issue_number} ($repo_name#$issue_number) ==="
 
             # Extract dependencies from "**Depends on:**" line
-            deps_line=$(echo "$body" | grep -oP '\*\*Depends on:\*\*\s*(.+)' | head -1 | sed 's/\*\*Depends on:\*\*\s*//')
+            deps_line=$(echo "$body" | grep -oP '\*\*Depends on:\*\*\s*\K.+' || true)
 
             if [ -z "$deps_line" ]; then
               echo "  No 'Depends on:' found in issue body, skipping."
@@ -130,12 +127,11 @@ jobs:
             echo "  Dependencies: $deps_line"
 
             all_resolved=true
-            # Split by comma and process each dependency
             IFS=',' read -ra dep_array <<< "$deps_line"
             for dep in "${dep_array[@]}"; do
-              dep=$(echo "$dep" | xargs)  # trim whitespace
-              dep_prefix=$(echo "$dep" | grep -oP '^[A-Z]+')
-              dep_number=$(echo "$dep" | grep -oP '[0-9]+$')
+              dep=$(echo "$dep" | xargs)
+              dep_prefix=$(echo "$dep" | grep -oP '^[A-Z]+' || true)
+              dep_number=$(echo "$dep" | grep -oP '[0-9]+$' || true)
               dep_repo=$(resolve_repo "$dep_prefix")
 
               if [ -z "$dep_repo" ] || [ -z "$dep_number" ]; then
@@ -144,7 +140,6 @@ jobs:
                 continue
               fi
 
-              # Check issue state via API
               state=$(gh issue view "$dep_number" --repo "$ORG/$dep_repo" --json state -q '.state' 2>/dev/null || echo "UNKNOWN")
               echo "  $dep ($dep_repo#$dep_number) -> $state"
 
