@@ -73,6 +73,7 @@ All operations go through `uv run hhh`:
 | `uv run hhh setup` | Local setup (submodules + uv sync + npm install) |
 | `uv run hhh sync` | **Pull latest + update submodules + sync all deps** |
 | `uv run hhh sync <service>` | Pull + sync deps + rebuild + restart a single service |
+| `uv run hhh hotdeploy` | **Auto-CD**: detect changed submodules, sync + redeploy only affected containers |
 | `uv run hhh start` | Start backends locally (no Docker) |
 | `uv run test` | Run tests for all services |
 | `uv run lint` | Run linter for all services |

@@ -74,10 +74,12 @@ def _resolve_service(name: str) -> tuple[str, str]:
     print(f"Available: {', '.join(available)}")
     sys.exit(1)
 
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
 # ── helpers ──────────────────────────────────────────────────────────
+
 
 def _run(args: list[str], *, cwd: Path | None = None, shell: bool = False) -> int:
     return subprocess.run(args, cwd=cwd, shell=shell).returncode
@@ -93,7 +95,69 @@ def _ensure_synced(svc_dir: Path) -> None:
         _sync_service(svc_dir)
 
 
+def _get_rev(args: list[str], cwd: Path) -> str | None:
+    """Run git rev-parse and return the commit SHA, or None on failure."""
+    result = subprocess.run(
+        ["git", "rev-parse", *args],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def _count_commits_behind(svc_dir: Path, local: str, remote: str) -> int:
+    """Return the number of commits local is behind remote."""
+    result = subprocess.run(
+        ["git", "rev-list", "--count", f"{local}..{remote}"],
+        cwd=svc_dir,
+        capture_output=True,
+        text=True,
+    )
+    return int(result.stdout.strip()) if result.returncode == 0 else 0
+
+
+def _detect_changed_submodules() -> list[tuple[str, str, int]]:
+    """Fetch each submodule and detect which ones have new upstream commits.
+
+    Returns a list of (submodule_dir, compose_name, commits_behind) for
+    submodules where the local HEAD is behind origin/main.
+    """
+    changed: list[tuple[str, str, int]] = []
+
+    for sub_dir, compose_name in COMPOSE_SERVICE_MAP.items():
+        svc_path = ROOT / sub_dir
+        if not svc_path.exists():
+            print(f"  {sub_dir:<30} (not found, skipping)")
+            continue
+
+        # Fetch latest refs from origin
+        subprocess.run(
+            ["git", "fetch", "origin"],
+            cwd=svc_path,
+            capture_output=True,
+        )
+
+        local_sha = _get_rev(["HEAD"], cwd=svc_path)
+        remote_sha = _get_rev(["origin/main"], cwd=svc_path)
+
+        if not local_sha or not remote_sha:
+            print(f"  {sub_dir:<30} (could not resolve refs, skipping)")
+            continue
+
+        if local_sha == remote_sha:
+            print(f"  {sub_dir:<30} up to date")
+        else:
+            behind = _count_commits_behind(svc_path, local_sha, remote_sha)
+            label = "commit" if behind == 1 else "commits"
+            print(f"  {sub_dir:<30} {behind} new {label}")
+            changed.append((sub_dir, compose_name, behind))
+
+    return changed
+
+
 # ── commands ─────────────────────────────────────────────────────────
+
 
 def setup() -> None:
     """Full setup: init submodules + sync all services + install frontends."""
@@ -179,7 +243,8 @@ def sync() -> None:
             continue
         # Check if there are lockfile changes to commit
         rc = subprocess.run(
-            ["git", "diff", "--quiet"], cwd=mod_dir,
+            ["git", "diff", "--quiet"],
+            cwd=mod_dir,
         ).returncode
         if rc != 0:
             print(f"  -> {mod_name}: committing lockfile updates")
@@ -214,7 +279,16 @@ def start() -> None:
         _ensure_synced(svc_dir)
         print(f"  -> {svc_name} on port {port}")
         p = subprocess.Popen(
-            ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", f"--port={port}", "--reload"],
+            [
+                "uv",
+                "run",
+                "uvicorn",
+                "src.main:app",
+                "--host",
+                "0.0.0.0",
+                f"--port={port}",
+                "--reload",
+            ],
             cwd=svc_dir,
         )
         processes.append((svc_name, p))
@@ -354,7 +428,10 @@ def restart(service_name: str) -> None:
     print(f"=== H³ – Restarting {compose_name} ===\n")
 
     print(f"  -> Rebuilding {compose_name}...")
-    code = _run(["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name], cwd=ROOT)
+    code = _run(
+        ["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name],
+        cwd=ROOT,
+    )
     if code != 0:
         print(f"\nFailed to restart {compose_name}")
         sys.exit(code)
@@ -380,7 +457,7 @@ def sync_service(service_name: str) -> None:
     _run(["git", "submodule", "update", "--remote", "--merge", "--", sub_dir], cwd=ROOT)
 
     # 2. Sync dependencies
-    print(f"\n[2/3] Syncing dependencies...")
+    print("\n[2/3] Syncing dependencies...")
     is_frontend = sub_dir in {fe for fe, _ in FRONTENDS}
     if is_frontend:
         _run(["npm", "install"], cwd=svc_path, shell=True)
@@ -391,7 +468,10 @@ def sync_service(service_name: str) -> None:
 
     # 3. Rebuild and restart container
     print(f"\n[3/3] Rebuilding and restarting {compose_name}...")
-    code = _run(["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name], cwd=ROOT)
+    code = _run(
+        ["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name],
+        cwd=ROOT,
+    )
     if code != 0:
         sys.exit(code)
 
@@ -408,17 +488,98 @@ def logs_service(service_name: str) -> None:
     sys.exit(_run(["docker", "compose", "logs", "-f", compose_name], cwd=ROOT))
 
 
+def hotdeploy() -> None:
+    """Auto-detect changed submodules, sync and redeploy only affected containers.
+
+    Fetches each submodule from origin, compares HEAD vs origin/main,
+    then syncs deps + rebuilds + restarts only the containers that changed.
+    The rest of the stack stays running untouched.
+
+    Usage: uv run hhh hotdeploy
+    """
+    print("=== H\xb3 \u2013 Hot Deploy ===\n")
+
+    # 1. Detect which submodules have upstream changes
+    print("\u2500\u2500 Checking submodules for upstream changes \u2500\u2500\n")
+    changed = _detect_changed_submodules()
+
+    if not changed:
+        print("\nEverything up to date \u2014 nothing to deploy.")
+        return
+
+    # 2. Summary of what will be redeployed
+    print(f"\n\u2500\u2500 {len(changed)} submodule(s) to redeploy \u2500\u2500\n")
+    for sub_dir, compose_name, behind in changed:
+        label = "commit" if behind == 1 else "commits"
+        print(f"  \u2022 {compose_name} ({behind} {label})")
+
+    # 3. Sync + rebuild each changed submodule
+    failed: list[str] = []
+    for i, (sub_dir, compose_name, _behind) in enumerate(changed, 1):
+        svc_path = ROOT / sub_dir
+        is_frontend = sub_dir in {fe for fe, _ in FRONTENDS}
+        print(
+            f"\n\u2500\u2500 [{i}/{len(changed)}] Deploying {compose_name} \u2500\u2500\n"
+        )
+
+        # Update submodule to latest
+        print(f"  [1/3] Updating submodule {sub_dir}...")
+        _run(
+            ["git", "submodule", "update", "--remote", "--merge", "--", sub_dir],
+            cwd=ROOT,
+        )
+
+        # Sync dependencies
+        print("  [2/3] Syncing dependencies...")
+        if is_frontend:
+            _run(["npm", "install"], cwd=svc_path, shell=True)
+        else:
+            if not _sync_service(svc_path):
+                print(f"  WARNING: dependency sync failed for {sub_dir}")
+                failed.append(compose_name)
+                continue
+
+        # Rebuild + restart container
+        print(f"  [3/3] Rebuilding and restarting {compose_name}...")
+        code = _run(
+            ["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name],
+            cwd=ROOT,
+        )
+        if code != 0:
+            print(f"  WARNING: failed to restart {compose_name}")
+            failed.append(compose_name)
+        else:
+            print(f"  {compose_name} redeployed.")
+
+    # 4. Final summary
+    deployed = [c for _, c, _ in changed if c not in failed]
+    print("\n\u2500\u2500 Hot Deploy Summary \u2500\u2500\n")
+    if deployed:
+        print(f"  Redeployed ({len(deployed)}): {', '.join(deployed)}")
+    if failed:
+        print(f"  Failed     ({len(failed)}): {', '.join(failed)}")
+        sys.exit(1)
+    print("\nHot deploy complete!")
+
+
 # ── entry points ─────────────────────────────────────────────────────
 
 COMMANDS = {
     "up": (up, "First-use: submodules + build + start everything in Docker"),
     "down": (down, "Stop all containers"),
-    "restart": (None, "Rebuild + restart a single service (e.g. hhh restart contracts)"),
+    "restart": (
+        None,
+        "Rebuild + restart a single service (e.g. hhh restart contracts)",
+    ),
     "logs": (logs, "Follow logs (all or single service)"),
     "ps": (ps, "Show status of all containers"),
     "setup": (setup, "Full local setup (submodules + deps + frontends)"),
     "sync": (None, "Sync all or a single service (e.g. hhh sync contracts)"),
     "start": (start, "Start backend services locally (no Docker)"),
+    "hotdeploy": (
+        hotdeploy,
+        "Auto-detect changed submodules, sync + redeploy affected containers",
+    ),
     "test": (run_tests, "Run tests for all services"),
     "lint": (run_lint, "Run linter for all services"),
 }

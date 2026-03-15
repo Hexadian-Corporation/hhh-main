@@ -292,6 +292,9 @@ uv run hhh sync contracts
 # Rebuild + restart a single service (no pull)
 uv run hhh restart contracts
 
+# Auto-CD: detect changed submodules + sync + redeploy only affected containers
+uv run hhh hotdeploy
+
 # Follow logs of a single service
 uv run hhh logs contracts
 ```
