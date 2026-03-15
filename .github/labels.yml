@@ -50,6 +50,10 @@
   color: "ff9f1c"
   description: "Medium priority"
 
+- name: "priority:low"
+  color: "c5def5"
+  description: "Low priority"
+
 - name: project-management
   color: "d4c5f9"
   description: "Project management and planning"

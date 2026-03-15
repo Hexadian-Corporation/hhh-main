@@ -235,7 +235,7 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 
 ### Labels
 
-Custom labels synced across repos: `domain`, `api`, `persistence`, `backend`, `frontend`, `setup`, `testing`, `feature`, `enhancement`, `backoffice`, `priority:high`, `priority:medium`, `project-management`
+Custom labels synced across repos: `domain`, `api`, `persistence`, `backend`, `frontend`, `setup`, `testing`, `feature`, `enhancement`, `backoffice`, `priority:high`, `priority:medium`, `priority:low`, `project-management`
 
 ## Quality Standards
 
