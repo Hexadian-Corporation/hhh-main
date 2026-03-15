@@ -1,6 +1,8 @@
 name: Auto-unblock tasks
 
 on:
+  repository_dispatch:
+    types: [unblock-check]
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
