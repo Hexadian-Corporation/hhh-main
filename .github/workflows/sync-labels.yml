@@ -18,9 +18,14 @@ jobs:
         repo:
           - hhh-main
           - hhh-contracts-service
-          - hhh-backoffice-frontend
-          - hhh-frontend
+          - hhh-ships-service
           - hhh-maps-service
+          - hhh-graphs-service
+          - hhh-routes-service
+          - hhh-auth-service
+          - hhh-frontend
+          - hhh-backoffice-frontend
+          - hhh-commodities-service
     steps:
       - name: Checkout
         uses: actions/checkout@v4
