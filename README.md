@@ -14,6 +14,7 @@ Microservices with hexagonal architecture (Ports & Adapters), each service in it
 | `hhh-graphs-service` | 8004 | Travel graph and connectivity |
 | `hhh-routes-service` | 8005 | Route optimization engine |
 | `hhh-auth-service` | 8006 | Authentication and user management |
+| `hhh-commodities-service` | 8007 | Commodity data management |
 | `hhh-frontend` | 3000 | Main web application (React) |
 | `hhh-backoffice-frontend` | 3001 | Admin panel (React) |
 
@@ -42,7 +43,7 @@ uv run hhh up
 This does everything automatically:
 1. Initializes Git submodules
 2. Builds a Docker image for each component
-3. Starts **9 containers**: MongoDB + 6 backends + 2 frontends
+3. Starts **10 containers**: MongoDB + 7 backends + 2 frontends
 
 Result:
 
@@ -56,6 +57,7 @@ Result:
 | Graphs API | http://localhost:8004/docs |
 | Routes API | http://localhost:8005/docs |
 | Auth API | http://localhost:8006/docs |
+| Commodities API | http://localhost:8007/docs |
 
 ## CLI Reference
 
@@ -78,7 +80,7 @@ All operations go through `uv run hhh`:
 
 **Service aliases** (used with `restart`, `sync`, `logs`):
 
-`contracts` · `ships` · `maps` · `graphs` · `routes` · `auth` · `frontend` · `backoffice`
+`contracts` · `ships` · `maps` · `graphs` · `routes` · `auth` · `commodities` · `frontend` · `backoffice`
 
 Example: `uv run hhh restart contracts` rebuilds and restarts only the contracts-service container.
 
