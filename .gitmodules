@@ -18,10 +18,6 @@
 	path = hhh-routes-service
 	url = https://github.com/Hexadian-Corporation/hhh-routes-service.git
 	branch = main
-[submodule "hhh-auth-service"]
-	path = hhh-auth-service
-	url = https://github.com/Hexadian-Corporation/hhh-auth-service.git
-	branch = main
 [submodule "hhh-frontend"]
 	path = hhh-frontend
 	url = https://github.com/Hexadian-Corporation/hhh-frontend.git

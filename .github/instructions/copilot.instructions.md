@@ -18,13 +18,14 @@ The workspace at `hhh-main` is a monorepo with **git submodules** — one per se
 | `hhh-maps-service` | `Hexadian-Corporation/hhh-maps-service` | 8003 | Python · FastAPI · MongoDB | Location / map data (stations, cities, orbitals) |
 | `hhh-graphs-service` | `Hexadian-Corporation/hhh-graphs-service` | 8004 | Python · FastAPI · MongoDB | Graph/analytics service |
 | `hhh-routes-service` | `Hexadian-Corporation/hhh-routes-service` | 8005 | Python · FastAPI · MongoDB | Route calculation (depends on contracts, ships, maps, graphs) |
-| `hhh-auth-service` | `Hexadian-Corporation/hhh-auth-service` | 8006 | Python · FastAPI · MongoDB | User auth (register, login, JWT, RSI verification) |
 | `hhh-commodities-service` | `Hexadian-Corporation/hhh-commodities-service` | 8007 | Python · FastAPI · MongoDB | Commodity reference data (trade goods catalog) |
 | `hhh-frontend` | `Hexadian-Corporation/hhh-frontend` | 3000 | React 19 · TypeScript · Vite 8 | Player-facing frontend |
 | `hhh-backoffice-frontend` | `Hexadian-Corporation/hhh-backoffice-frontend` | 3001 | React 19 · TypeScript · Vite 8 | Admin backoffice |
 
+> **Standalone service (not a submodule):** `hexadian-auth-service` (`Hexadian-Corporation/hexadian-auth-service`) — port 8006, Python · FastAPI · MongoDB. User auth (register, login, JWT, RSI verification). Runs independently with its own MongoDB instance and docker-compose.
+
 The root `hhh-main` repo (`Hexadian-Corporation/hhh-main`) contains:
-- `docker-compose.yml` — orchestrates all services + MongoDB 3-node replica set
+- `docker-compose.yml` — orchestrates H³ services + MongoDB 3-node replica set (auth service runs standalone)
 - `.github/` — labels, workflows, project board config
 - `pyproject.toml` — workspace-level Python config
 
@@ -44,7 +45,6 @@ hhh-main/
 ├── hhh-maps-service/                # Submodule → Hexadian-Corporation/hhh-maps-service
 ├── hhh-graphs-service/              # Submodule → Hexadian-Corporation/hhh-graphs-service
 ├── hhh-routes-service/              # Submodule → Hexadian-Corporation/hhh-routes-service
-├── hhh-auth-service/                # Submodule → Hexadian-Corporation/hhh-auth-service
 ├── hhh-commodities-service/         # Submodule → Hexadian-Corporation/hhh-commodities-service
 ├── hhh-frontend/                    # Submodule → Hexadian-Corporation/hhh-frontend
 └── hhh-backoffice-frontend/         # Submodule → Hexadian-Corporation/hhh-backoffice-frontend
@@ -90,7 +90,7 @@ src/
 - DTOs at the API boundary are **Pydantic BaseModel** subclasses
 - Mappers are **static classes** (`to_domain`, `to_dto`, `to_document`)
 - DI uses **opyoid** (`Module`, `Injector`, `SingletonScope`)
-- Settings use `pydantic-settings` with env prefix `HHH_{SERVICE_NAME}_`
+- Settings use `pydantic-settings` with env prefix `HHH_{SERVICE_NAME}_` (except auth: `HEXADIAN_AUTH_`)
 - Repositories use **pymongo** directly (no ODM)
 
 **Router patterns (two in use):**
@@ -115,7 +115,7 @@ Both frontends share the intended stack (being set up):
 ### Infrastructure
 
 - **MongoDB 7** — 3-node replica set (`rs0`) via docker-compose
-- **Database-per-service** pattern — each service has its own DB (e.g., `hhh_contracts`, `hhh_maps`, `hhh_auth`)
+- **Database-per-service** pattern — each service has its own DB (e.g., `hhh_contracts`, `hhh_maps`, `hexadian_auth`)
 - Docker images use `mirror.gcr.io/library/` prefix for base images
 
 ## Domain Context
@@ -231,7 +231,7 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 | M1: Hauling Contracts — Domain & API | hhh-contracts-service | Enrich domain, DTOs, mappers, PUT endpoint, CORS, MongoDB, tests |
 | M2: Backoffice — Contract Management | hhh-backoffice-frontend | Setup, types/API client, list page, edit page (3-tab form) |
 | M3: Frontend — Contract Creation | hhh-frontend | Setup, types/API client, landing page, create form (3-tab) |
-| M4: Auth — RSI Account Verification | hhh-auth-service | Verify endpoint (code generation + RSI profile scraping) |
+| M4: Auth — RSI Account Verification | hexadian-auth-service | Verify endpoint (code generation + RSI profile scraping) |
 
 ### Labels
 

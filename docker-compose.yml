@@ -136,19 +136,6 @@ services:
       graphs-service:
         condition: service_started
 
-  auth-service:
-    build: ./hhh-auth-service
-    ports:
-      - "8006:8006"
-    environment:
-      - HHH_AUTH_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
-      - HHH_AUTH_JWT_SECRET=${HHH_AUTH_JWT_SECRET:-change-me-in-production}
-    depends_on:
-      mongo1:
-        condition: service_healthy
-      mongo-init:
-        condition: service_completed_successfully
-
   commodities-service:
     build: ./hhh-commodities-service
     ports:
@@ -169,14 +156,11 @@ services:
       - contracts-service
       - ships-service
       - routes-service
-      - auth-service
 
   backoffice-frontend:
     build: ./hhh-backoffice-frontend
     ports:
       - "3001:3001"
-    depends_on:
-      - auth-service
 
 volumes:
   mongo1_data:

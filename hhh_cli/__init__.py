@@ -17,7 +17,6 @@ SERVICES = [
     ("hhh-maps-service", 8003),
     ("hhh-graphs-service", 8004),
     ("hhh-routes-service", 8005),
-    ("hhh-auth-service", 8006),
     ("hhh-commodities-service", 8007),
 ]
 
@@ -33,7 +32,6 @@ COMPOSE_SERVICE_MAP: dict[str, str] = {
     "hhh-maps-service": "maps-service",
     "hhh-graphs-service": "graphs-service",
     "hhh-routes-service": "routes-service",
-    "hhh-auth-service": "auth-service",
     "hhh-commodities-service": "commodities-service",
     "hhh-frontend": "frontend",
     "hhh-backoffice-frontend": "backoffice-frontend",
@@ -46,7 +44,6 @@ SERVICE_ALIASES: dict[str, str] = {
     "maps": "hhh-maps-service",
     "graphs": "hhh-graphs-service",
     "routes": "hhh-routes-service",
-    "auth": "hhh-auth-service",
     "commodities": "hhh-commodities-service",
     "frontend": "hhh-frontend",
     "backoffice": "hhh-backoffice-frontend",
