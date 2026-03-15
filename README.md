@@ -34,8 +34,8 @@ Microservices with hexagonal architecture (Ports & Adapters), each service in it
 Two commands. On a fresh machine, all you need is (requires `git` and `uv` programs intalled):
 
 ```bash
-git clone --recurse-submodules https://github.com/Hexadian-Corporation/hhh-main.git
-cd hhh-main
+git clone --recurse-submodules https://github.com/Hexadian-Corporation/hexadian-hauling-helper.git
+cd hexadian-hauling-helper
 uv run hhh up
 ```
 

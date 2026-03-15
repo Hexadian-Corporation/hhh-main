@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         repo:
-          - hhh-main
+          - hexadian-hauling-helper
           - hhh-contracts-service
           - hhh-backoffice-frontend
           - hhh-frontend

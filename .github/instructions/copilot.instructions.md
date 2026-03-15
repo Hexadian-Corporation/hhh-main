@@ -7,7 +7,7 @@
 
 **H³ (Hexadian Hauling Helper)** is a Star Citizen companion app for managing hauling contracts. The product is owned by **Hexadian Corporation** (GitHub org: `Hexadian-Corporation`).
 
-The workspace at `hhh-main` is a monorepo with **git submodules** — one per service/frontend. Each submodule has its **own GitHub repository** under the org.
+The workspace at `hexadian-hauling-helper` is a monorepo with **git submodules** — one per service/frontend. Each submodule has its **own GitHub repository** under the org.
 
 ## Repository Map
 
@@ -24,15 +24,15 @@ The workspace at `hhh-main` is a monorepo with **git submodules** — one per se
 
 > **Standalone service (not a submodule):** `hexadian-auth-service` (`Hexadian-Corporation/hexadian-auth-service`) — port 8006, Python · FastAPI · MongoDB. User auth (register, login, JWT, RSI verification). Runs independently with its own MongoDB instance and docker-compose.
 
-The root `hhh-main` repo (`Hexadian-Corporation/hhh-main`) contains:
+The root `hexadian-hauling-helper` repo (`Hexadian-Corporation/hexadian-hauling-helper`) contains:
 - `docker-compose.yml` — orchestrates H³ services + MongoDB 3-node replica set (auth service runs standalone)
 - `.github/` — labels, workflows, project board config
 - `pyproject.toml` — workspace-level Python config
 
-### hhh-main — Root Monorepo
+### hexadian-hauling-helper — Root Monorepo
 
 ```
-hhh-main/
+hexadian-hauling-helper/
 ├── docker-compose.yml               # Full-stack orchestration (all services + MongoDB replica set)
 ├── pyproject.toml                    # Workspace-level Python config
 ├── .github/
@@ -50,14 +50,14 @@ hhh-main/
 └── hhh-backoffice-frontend/         # Submodule → Hexadian-Corporation/hhh-backoffice-frontend
 ```
 
-**Workflows in hhh-main:**
+**Workflows in hexadian-hauling-helper:**
 - **`pr-title.yml`** — Validates PR title format: `<type>(main): description`
 - **`sync-submodules.yml`** — Triggered by `repository_dispatch` (`submodule-updated`) from any submodule. Runs `git submodule update --remote --merge`, commits and pushes updated refs.
 - **`auto-unblock.yml`** — Runs every 15 minutes + on `repository_dispatch` (`unblock-check`). Checks all "Blocked" items on the project board and moves them to "Ready" when all blocking issues are closed.
 
-**hhh-main issue & PR title format:** `<type>(main): description` (e.g., `ci(main): add auto-unblock workflow`)
+**hexadian-hauling-helper issue & PR title format:** `<type>(main): description` (e.g., `ci(main): add auto-unblock workflow`)
 
-**hhh-main quality standards:** CI only runs `Validate PR Title`. No lint/test jobs (no application code in this repo). Squash merge only.
+**hexadian-hauling-helper quality standards:** CI only runs `Validate PR Title`. No lint/test jobs (no application code in this repo). Squash merge only.
 
 ## Architecture
 
@@ -227,7 +227,7 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 
 | Milestone | Repo(s) | Description |
 |-----------|---------|-------------|
-| M0: Project Setup | hhh-main, hhh-maps-service | Board config, seed locations |
+| M0: Project Setup | hexadian-hauling-helper, hhh-maps-service | Board config, seed locations |
 | M1: Hauling Contracts — Domain & API | hhh-contracts-service | Enrich domain, DTOs, mappers, PUT endpoint, CORS, MongoDB, tests |
 | M2: Backoffice — Contract Management | hhh-backoffice-frontend | Setup, types/API client, list page, edit page (3-tab form) |
 | M3: Frontend — Contract Creation | hhh-frontend | Setup, types/API client, landing page, create form (3-tab) |

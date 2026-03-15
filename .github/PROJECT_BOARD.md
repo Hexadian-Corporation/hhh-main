@@ -27,7 +27,7 @@ target repositories by the **Sync labels** workflow
 
 Target repositories:
 
-- `hhh-main`
+- `hexadian-hauling-helper`
 - `hhh-contracts-service`
 - `hhh-backoffice-frontend`
 - `hhh-frontend`

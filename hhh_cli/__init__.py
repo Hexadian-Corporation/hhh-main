@@ -302,8 +302,8 @@ def sync() -> None:
         else:
             print(f"  -> {mod_name}: up to date")
 
-    # 6. Update submodule refs in hhh-main
-    print("\n── Updating submodule refs in hhh-main ──")
+    # 6. Update submodule refs in hexadian-hauling-helper
+    print("\n── Updating submodule refs in hexadian-hauling-helper ──")
     rc = subprocess.run(["git", "diff", "--quiet"], cwd=ROOT).returncode
     if rc != 0:
         _run(["git", "add", "-A"], cwd=ROOT)
