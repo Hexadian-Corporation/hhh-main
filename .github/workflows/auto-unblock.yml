@@ -116,8 +116,8 @@ jobs:
             echo ""
             echo "=== Checking ${prefix}-${issue_number} ($repo_name#$issue_number) ==="
 
-            # Extract dependencies from "**Depends on:**" line
-            deps_line=$(echo "$body" | grep -oP '\*\*Depends on:\*\*\s*\K.+' || true)
+# Extract dependencies from "**Depends on:**" line (strip \r from Windows line endings)
+          deps_line=$(echo "$body" | grep -oP '\*\*Depends on:\*\*\s*\K.+' | tr -d '\r' || true)
 
             if [ -z "$deps_line" ]; then
               echo "  No 'Depends on:' found in issue body, skipping."
