@@ -179,6 +179,9 @@ services:
     build: ./hhh-backoffice-frontend
     ports:
       - "3001:3001"
+    networks:
+      - default
+      - hexadian-net
 
 volumes:
   mongo1_data:
