@@ -18,10 +18,13 @@ jobs:
         repo:
           - hexadian-hauling-helper
           - hhh-contracts-service
-          - hhh-backoffice-frontend
-          - hhh-frontend
+          - hhh-ships-service
           - hhh-maps-service
+          - hhh-graphs-service
+          - hhh-routes-service
           - hhh-commodities-service
+          - hhh-frontend
+          - hhh-backoffice-frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4

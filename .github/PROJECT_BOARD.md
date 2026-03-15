@@ -4,13 +4,22 @@ GitHub Projects board: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 
 ## Columns (Status field)
 
-| Column        | Purpose                                            |
-| ------------- | -------------------------------------------------- |
-| **Backlog**       | Created issues pending prioritisation              |
-| **Ready**         | Issues with all dependencies resolved, ready to start |
-| **In Progress**   | Actively being developed                           |
-| **In Review**     | In code review / PR open                           |
-| **Done**          | Completed and merged                               |
+| Column          | Purpose                                               |
+| --------------- | ----------------------------------------------------- |
+| **Backlog**     | Created issues pending prioritisation                 |
+| **Ready**       | Issues with all dependencies resolved, ready to start |
+| **Blocked**     | Waiting on dependencies (auto-unblocked when resolved)|
+| **In Progress** | Actively being developed                              |
+| **In Review**   | In code review / PR open                              |
+| **Done**        | Completed and merged                                  |
+
+## Priority field
+
+| Priority     | Color  |
+| ------------ | ------ |
+| **High**     | Red    |
+| **Medium**   | Yellow |
+| **Low**      | Green  |
 
 ## Additional Views
 
@@ -29,9 +38,13 @@ Target repositories:
 
 - `hexadian-hauling-helper`
 - `hhh-contracts-service`
-- `hhh-backoffice-frontend`
-- `hhh-frontend`
+- `hhh-ships-service`
 - `hhh-maps-service`
+- `hhh-graphs-service`
+- `hhh-routes-service`
+- `hhh-commodities-service`
+- `hhh-frontend`
+- `hhh-backoffice-frontend`
 
 ### Triggering a manual sync
 

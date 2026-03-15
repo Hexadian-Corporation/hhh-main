@@ -126,6 +126,15 @@ def _stop_auth() -> None:
         _run(["docker", "compose", "down"], cwd=AUTH_DIR)
 
 
+def _remove_mongo_init() -> None:
+    """Remove the stopped mongo-init container to keep `docker ps -a` clean."""
+    subprocess.run(
+        ["docker", "compose", "rm", "-f", "mongo-init"],
+        cwd=ROOT,
+        capture_output=True,
+    )
+
+
 # ── helpers ──────────────────────────────────────────────────────────
 
 
@@ -392,6 +401,7 @@ def up() -> None:
     code = _run(["docker", "compose", "up", "--build", "-d"], cwd=ROOT)
     if code != 0:
         sys.exit(code)
+    _remove_mongo_init()
 
     print("\n=== H³ is running! ===")
     print()
@@ -498,6 +508,7 @@ def restart(service_name: str) -> None:
     if code != 0:
         print(f"\nFailed to restart {compose_name}")
         sys.exit(code)
+    _remove_mongo_init()
     print(f"\n{compose_name} restarted successfully.")
 
 
@@ -539,6 +550,7 @@ def sync_service(service_name: str) -> None:
     )
     if code != 0:
         sys.exit(code)
+    _remove_mongo_init()
 
     print(f"\n{compose_name} synced and restarted.")
 
@@ -626,6 +638,7 @@ def hotdeploy() -> None:
     if failed:
         print(f"  Failed     ({len(failed)}): {', '.join(failed)}")
         sys.exit(1)
+    _remove_mongo_init()
     print("\nHot deploy complete!")
 
 
