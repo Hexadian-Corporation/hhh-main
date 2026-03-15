@@ -149,6 +149,18 @@ services:
       mongo-init:
         condition: service_completed_successfully
 
+  commodities-service:
+    build: ./hhh-commodities-service
+    ports:
+      - "8007:8007"
+    environment:
+      - HHH_COMMODITIES_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+
   frontend:
     build: ./hhh-frontend
     ports:
