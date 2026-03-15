@@ -1,3 +1,5 @@
+name: hexadian-hauling-helper
+
 x-mongo-common: &mongo-common
   image: mirror.gcr.io/library/mongo:7
   dns:
