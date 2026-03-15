@@ -6,6 +6,7 @@ All commands are invoked via `uv run hhh <command>`.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -34,7 +35,8 @@ def _run(args: list[str], *, cwd: Path | None = None, shell: bool = False) -> in
 
 
 def _sync_service(svc_dir: Path) -> bool:
-    return _run(["uv", "sync"], cwd=svc_dir) == 0
+    env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
+    return subprocess.run(["uv", "sync"], cwd=svc_dir, env=env).returncode == 0
 
 
 def _ensure_synced(svc_dir: Path) -> None:
