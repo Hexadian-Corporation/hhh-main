@@ -1,24 +1,32 @@
 [submodule "hhh-contracts-service"]
 	path = hhh-contracts-service
 	url = https://github.com/Hexadian-Corporation/hhh-contracts-service.git
+	branch = main
 [submodule "hhh-ships-service"]
 	path = hhh-ships-service
 	url = https://github.com/Hexadian-Corporation/hhh-ships-service.git
+	branch = main
 [submodule "hhh-maps-service"]
 	path = hhh-maps-service
 	url = https://github.com/Hexadian-Corporation/hhh-maps-service.git
+	branch = main
 [submodule "hhh-graphs-service"]
 	path = hhh-graphs-service
 	url = https://github.com/Hexadian-Corporation/hhh-graphs-service.git
+	branch = main
 [submodule "hhh-routes-service"]
 	path = hhh-routes-service
 	url = https://github.com/Hexadian-Corporation/hhh-routes-service.git
+	branch = main
 [submodule "hhh-auth-service"]
 	path = hhh-auth-service
 	url = https://github.com/Hexadian-Corporation/hhh-auth-service.git
+	branch = main
 [submodule "hhh-frontend"]
 	path = hhh-frontend
 	url = https://github.com/Hexadian-Corporation/hhh-frontend.git
+	branch = main
 [submodule "hhh-backoffice-frontend"]
 	path = hhh-backoffice-frontend
 	url = https://github.com/Hexadian-Corporation/hhh-backoffice-frontend.git
+	branch = main
