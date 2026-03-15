@@ -18,6 +18,7 @@ SERVICES = [
     ("hhh-graphs-service", 8004),
     ("hhh-routes-service", 8005),
     ("hhh-auth-service", 8006),
+    ("hhh-commodities-service", 8007),
 ]
 
 FRONTENDS = [
@@ -33,6 +34,7 @@ COMPOSE_SERVICE_MAP: dict[str, str] = {
     "hhh-graphs-service": "graphs-service",
     "hhh-routes-service": "routes-service",
     "hhh-auth-service": "auth-service",
+    "hhh-commodities-service": "commodities-service",
     "hhh-frontend": "frontend",
     "hhh-backoffice-frontend": "backoffice-frontend",
 }
@@ -45,6 +47,7 @@ SERVICE_ALIASES: dict[str, str] = {
     "graphs": "hhh-graphs-service",
     "routes": "hhh-routes-service",
     "auth": "hhh-auth-service",
+    "commodities": "hhh-commodities-service",
     "frontend": "hhh-frontend",
     "backoffice": "hhh-backoffice-frontend",
 }
@@ -234,7 +237,7 @@ def up() -> None:
     After cloning the repo, this is the only command needed:
         uv run hhh up
 
-    Result: MongoDB + 6 backend services + 2 frontends running in Docker.
+    Result: MongoDB + 7 backend services + 2 frontends running in Docker.
     - Frontend:           http://localhost:3000
     - Backoffice:         http://localhost:3001
     - Contracts API:      http://localhost:8001
@@ -243,6 +246,7 @@ def up() -> None:
     - Graphs API:         http://localhost:8004
     - Routes API:         http://localhost:8005
     - Auth API:           http://localhost:8006
+    - Commodities API:    http://localhost:8007
     """
     print("=== H³ – First-use setup & launch ===\n")
 
@@ -252,7 +256,7 @@ def up() -> None:
 
     # 2. Docker compose build + up (each component in its own container)
     print("\n[2/2] Building and starting all containers...")
-    print("       (MongoDB + 6 services + 2 frontends)\n")
+    print("       (MongoDB + 7 services + 2 frontends)\n")
     code = _run(["docker", "compose", "up", "--build", "-d"], cwd=ROOT)
     if code != 0:
         sys.exit(code)
@@ -268,6 +272,7 @@ def up() -> None:
     print("  Graphs API:         http://localhost:8004/docs")
     print("  Routes API:         http://localhost:8005/docs")
     print("  Auth API:           http://localhost:8006/docs")
+    print("  Commodities API:    http://localhost:8007/docs")
     print()
     print("  Stop:  uv run hhh down")
     print("  Logs:  uv run hhh logs")

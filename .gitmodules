@@ -30,3 +30,7 @@
 	path = hhh-backoffice-frontend
 	url = https://github.com/Hexadian-Corporation/hhh-backoffice-frontend.git
 	branch = main
+[submodule "hhh-commodities-service"]
+	path = hhh-commodities-service
+	url = https://github.com/Hexadian-Corporation/hhh-commodities-service.git
+	branch = main
