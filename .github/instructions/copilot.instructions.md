@@ -19,6 +19,7 @@ The workspace at `hhh-main` is a monorepo with **git submodules** — one per se
 | `hhh-graphs-service` | `Hexadian-Corporation/hhh-graphs-service` | 8004 | Python · FastAPI · MongoDB | Graph/analytics service |
 | `hhh-routes-service` | `Hexadian-Corporation/hhh-routes-service` | 8005 | Python · FastAPI · MongoDB | Route calculation (depends on contracts, ships, maps, graphs) |
 | `hhh-auth-service` | `Hexadian-Corporation/hhh-auth-service` | 8006 | Python · FastAPI · MongoDB | User auth (register, login, JWT, RSI verification) |
+| `hhh-commodities-service` | `Hexadian-Corporation/hhh-commodities-service` | 8007 | Python · FastAPI · MongoDB | Commodity reference data (trade goods catalog) |
 | `hhh-frontend` | `Hexadian-Corporation/hhh-frontend` | 3000 | React 19 · TypeScript · Vite 8 | Player-facing frontend |
 | `hhh-backoffice-frontend` | `Hexadian-Corporation/hhh-backoffice-frontend` | 3001 | React 19 · TypeScript · Vite 8 | Admin backoffice |
 
@@ -44,6 +45,7 @@ hhh-main/
 ├── hhh-graphs-service/              # Submodule → Hexadian-Corporation/hhh-graphs-service
 ├── hhh-routes-service/              # Submodule → Hexadian-Corporation/hhh-routes-service
 ├── hhh-auth-service/                # Submodule → Hexadian-Corporation/hhh-auth-service
+├── hhh-commodities-service/         # Submodule → Hexadian-Corporation/hhh-commodities-service
 ├── hhh-frontend/                    # Submodule → Hexadian-Corporation/hhh-frontend
 └── hhh-backoffice-frontend/         # Submodule → Hexadian-Corporation/hhh-backoffice-frontend
 ```
@@ -95,7 +97,7 @@ src/
 
 | Pattern | Used by | Description |
 |---------|---------|-------------|
-| `init_router(service)` + module-level `router` | maps, auth, ships, graphs, routes | Module-level `_service: Service \| None = None` initialized via `init_router()`. Router is a module-level `APIRouter`. `main.py` uses `create_app()` factory + `uvicorn.run()`. |
+| `init_router(service)` + module-level `router` | maps, auth, ships, graphs, routes, commodities | Module-level `_service: Service \| None = None` initialized via `init_router()`. Router is a module-level `APIRouter`. `main.py` uses `create_app()` factory + `uvicorn.run()`. |
 | `create_X_router(service) -> APIRouter` | contracts | Factory function that creates and returns a configured `APIRouter`. `main.py` uses a flat module-level `app` without `create_app()`. |
 
 > **Note:** The `init_router()` pattern is the standard. The contracts-service factory pattern is legacy and will be migrated.
@@ -160,6 +162,12 @@ Each `HaulingOrder.pickup_location_id` and `delivery_location_id` reference a Lo
 - **RouteStop** — `location_id`, `location_name`, `action` (pickup/delivery), `contract_id`, `cargo_name`, `cargo_scu`
 - **RouteLeg** — `from_location_id`, `to_location_id`, `distance`, `travel_time_seconds`, `travel_type`
 - **OptimizationParams** — `ship_id`, `contract_ids`, `strategy` (max_profit/min_time/min_distance), `max_route_time_seconds`
+
+### Commodities Service — Trade Goods Catalog
+
+- **Commodity** — `id`, `name`, `code`
+
+Unique index on `code`. Case-insensitive index on `name`. TTL application cache (`cachetools.TTLCache`, maxsize=128, ttl=900s) for `list_all()` and `get()`. `Cache-Control: max-age=900` on GET endpoints.
 
 ### Auth Service — User & RSI Verification
 
