@@ -7,10 +7,9 @@ from src.domain.models.commodity import Commodity
 
 
 class CommodityService(CommodityServicePort):
-    _cache: TTLCache[str, list[Commodity]] = TTLCache(maxsize=128, ttl=900)
-
     def __init__(self, repository: CommodityRepositoryPort) -> None:
         self._repository = repository
+        self._cache: TTLCache[str, list[Commodity]] = TTLCache(maxsize=128, ttl=900)
 
     def _invalidate_cache(self) -> None:
         self._cache.clear()
