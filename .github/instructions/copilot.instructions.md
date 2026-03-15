@@ -246,7 +246,7 @@ All code contributions must:
 | Tool | Purpose |
 |------|---------|
 | `uv` | Python package manager + project CLI |
-| `uv run hhh` | Monorepo CLI: `up`, `down`, `logs`, `setup`, `sync`, `start` |
+| `uv run hhh` | Monorepo CLI: `up`, `down`, `restart`, `logs`, `sync`, `setup`, `start` |
 | `ruff` | Python linter + formatter |
 | `pytest` | Python test runner |
 | `diff-cover` | PR-only coverage enforcement (changed lines only) |
@@ -277,4 +277,18 @@ cd hhh-contracts-service && uv run ruff check .
 
 # Run frontend dev server
 cd hhh-frontend && npm run dev
+
+# Sync + rebuild + restart a single service
+uv run hhh sync contracts
+
+# Rebuild + restart a single service (no pull)
+uv run hhh restart contracts
+
+# Follow logs of a single service
+uv run hhh logs contracts
 ```
+
+## Maintenance Rules
+
+- **Keep READMEs up to date.** When you add, remove, or change commands, environment variables, API endpoints, or architecture — update the README of the affected repo. The README is the source of truth for developers.
+- **Keep the CLI service registry up to date.** When adding or removing a service/submodule, update `SERVICES`, `FRONTENDS`, `COMPOSE_SERVICE_MAP`, and `SERVICE_ALIASES` in `hhh_cli/__init__.py`, plus the `docker-compose.yml` entry.

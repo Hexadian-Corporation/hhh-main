@@ -25,6 +25,52 @@ FRONTENDS = [
     ("hhh-backoffice-frontend", 3001),
 ]
 
+# Mapping: submodule directory name → docker-compose service name
+COMPOSE_SERVICE_MAP: dict[str, str] = {
+    "hhh-contracts-service": "contracts-service",
+    "hhh-ships-service": "ships-service",
+    "hhh-maps-service": "maps-service",
+    "hhh-graphs-service": "graphs-service",
+    "hhh-routes-service": "routes-service",
+    "hhh-auth-service": "auth-service",
+    "hhh-frontend": "frontend",
+    "hhh-backoffice-frontend": "backoffice-frontend",
+}
+
+# Accepted short aliases for convenience (e.g. `uv run hhh restart contracts`)
+SERVICE_ALIASES: dict[str, str] = {
+    "contracts": "hhh-contracts-service",
+    "ships": "hhh-ships-service",
+    "maps": "hhh-maps-service",
+    "graphs": "hhh-graphs-service",
+    "routes": "hhh-routes-service",
+    "auth": "hhh-auth-service",
+    "frontend": "hhh-frontend",
+    "backoffice": "hhh-backoffice-frontend",
+}
+
+
+def _resolve_service(name: str) -> tuple[str, str]:
+    """Resolve a service name/alias to (submodule_dir, compose_service).
+
+    Accepts: full dir name, compose name, or short alias.
+    """
+    # Direct submodule dir
+    if name in COMPOSE_SERVICE_MAP:
+        return name, COMPOSE_SERVICE_MAP[name]
+    # Short alias
+    if name in SERVICE_ALIASES:
+        sub = SERVICE_ALIASES[name]
+        return sub, COMPOSE_SERVICE_MAP[sub]
+    # Compose service name
+    for sub, comp in COMPOSE_SERVICE_MAP.items():
+        if name == comp:
+            return sub, comp
+    available = sorted(SERVICE_ALIASES.keys())
+    print(f"Unknown service: {name}")
+    print(f"Available: {', '.join(available)}")
+    sys.exit(1)
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -234,8 +280,17 @@ def down() -> None:
 
 
 def logs() -> None:
-    """Follow logs from all containers."""
-    sys.exit(_run(["docker", "compose", "logs", "-f"], cwd=ROOT))
+    """Follow logs from all containers, or a single one.
+
+    Usage:
+        uv run hhh logs              # all containers
+        uv run hhh logs <service>    # single container
+    """
+    args = sys.argv[2:]
+    if args:
+        logs_service(args[0])
+    else:
+        sys.exit(_run(["docker", "compose", "logs", "-f"], cwd=ROOT))
 
 
 def ps() -> None:
@@ -284,15 +339,80 @@ def run_lint() -> None:
     print("All clean!")
 
 
+def restart(service_name: str) -> None:
+    """Rebuild and restart a single service container.
+
+    Usage: uv run hhh restart <service>
+    Example: uv run hhh restart contracts
+    """
+    sub_dir, compose_name = _resolve_service(service_name)
+    print(f"=== H³ – Restarting {compose_name} ===\n")
+
+    print(f"  -> Rebuilding {compose_name}...")
+    code = _run(["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name], cwd=ROOT)
+    if code != 0:
+        print(f"\nFailed to restart {compose_name}")
+        sys.exit(code)
+    print(f"\n{compose_name} restarted successfully.")
+
+
+def sync_service(service_name: str) -> None:
+    """Pull latest, sync deps, rebuild and restart a single service.
+
+    Usage: uv run hhh sync <service>
+    Example: uv run hhh sync contracts
+    """
+    sub_dir, compose_name = _resolve_service(service_name)
+    svc_path = ROOT / sub_dir
+    if not svc_path.exists():
+        print(f"Submodule directory not found: {sub_dir}")
+        sys.exit(1)
+
+    print(f"=== H³ – Syncing {sub_dir} ===\n")
+
+    # 1. Update the single submodule
+    print(f"[1/3] Updating submodule {sub_dir}...")
+    _run(["git", "submodule", "update", "--remote", "--merge", "--", sub_dir], cwd=ROOT)
+
+    # 2. Sync dependencies
+    print(f"\n[2/3] Syncing dependencies...")
+    is_frontend = sub_dir in {fe for fe, _ in FRONTENDS}
+    if is_frontend:
+        _run(["npm", "install"], cwd=svc_path, shell=True)
+    else:
+        if not _sync_service(svc_path):
+            print(f"Failed to sync {sub_dir}")
+            sys.exit(1)
+
+    # 3. Rebuild and restart container
+    print(f"\n[3/3] Rebuilding and restarting {compose_name}...")
+    code = _run(["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name], cwd=ROOT)
+    if code != 0:
+        sys.exit(code)
+
+    print(f"\n{compose_name} synced and restarted.")
+
+
+def logs_service(service_name: str) -> None:
+    """Follow logs from a single container.
+
+    Usage: uv run hhh logs <service>
+    Example: uv run hhh logs contracts
+    """
+    _, compose_name = _resolve_service(service_name)
+    sys.exit(_run(["docker", "compose", "logs", "-f", compose_name], cwd=ROOT))
+
+
 # ── entry points ─────────────────────────────────────────────────────
 
 COMMANDS = {
     "up": (up, "First-use: submodules + build + start everything in Docker"),
     "down": (down, "Stop all containers"),
-    "logs": (logs, "Follow logs from all containers"),
+    "restart": (None, "Rebuild + restart a single service (e.g. hhh restart contracts)"),
+    "logs": (logs, "Follow logs (all or single service)"),
     "ps": (ps, "Show status of all containers"),
     "setup": (setup, "Full local setup (submodules + deps + frontends)"),
-    "sync": (sync, "Sync Python service dependencies"),
+    "sync": (None, "Sync all or a single service (e.g. hhh sync contracts)"),
     "start": (start, "Start backend services locally (no Docker)"),
     "test": (run_tests, "Run tests for all services"),
     "lint": (run_lint, "Run linter for all services"),
@@ -305,11 +425,27 @@ def main() -> None:
     cmd = args[0] if args else "up"
 
     if cmd in ("--help", "-h"):
-        print("Usage: hhh [command]\n")
+        print("Usage: hhh [command] [service]\n")
         print("Commands:")
         for name, (_, desc) in COMMANDS.items():
             print(f"  {name:<14} {desc}")
+        print(f"\nServices: {', '.join(sorted(SERVICE_ALIASES.keys()))}")
         sys.exit(0)
+
+    if cmd == "restart":
+        if len(args) < 2:
+            print("Usage: hhh restart <service>")
+            print(f"Services: {', '.join(sorted(SERVICE_ALIASES.keys()))}")
+            sys.exit(1)
+        restart(args[1])
+        return
+
+    if cmd == "sync":
+        if len(args) >= 2:
+            sync_service(args[1])
+        else:
+            sync()
+        return
 
     entry = COMMANDS.get(cmd)
     if entry is None:

@@ -65,14 +65,22 @@ All operations go through `uv run hhh`:
 |---|---|
 | `uv run hhh up` | **First use**: submodules + build + start everything in Docker |
 | `uv run hhh down` | Stop all containers |
-| `uv run hhh logs` | Follow logs from all containers |
+| `uv run hhh restart <service>` | Rebuild + restart a single service container |
+| `uv run hhh logs [service]` | Follow logs (all containers, or a single one) |
 | `uv run hhh ps` | Show status of each container |
 | `uv run hhh setup` | Local setup (submodules + uv sync + npm install) |
 | `uv run hhh sync` | **Pull latest + update submodules + sync all deps** |
+| `uv run hhh sync <service>` | Pull + sync deps + rebuild + restart a single service |
 | `uv run hhh start` | Start backends locally (no Docker) |
 | `uv run test` | Run tests for all services |
 | `uv run lint` | Run linter for all services |
 | `uv run hhh --help` | Show available commands |
+
+**Service aliases** (used with `restart`, `sync`, `logs`):
+
+`contracts` · `ships` · `maps` · `graphs` · `routes` · `auth` · `frontend` · `backoffice`
+
+Example: `uv run hhh restart contracts` rebuilds and restarts only the contracts-service container.
 
 ## Local Development (no Docker)
 
