@@ -24,7 +24,7 @@ jobs:
           BLOCKED_ID="fbfa34a2"
           READY_ID="3a8dc8b6"
 
-          # Fetch all project items
+          # Fetch all project items with their issue node IDs
           items_json=$(gh api graphql -f query='
             query {
               node(id: "'"$PROJECT_ID"'") {
@@ -39,10 +39,10 @@ jobs:
                       }
                       content {
                         ... on Issue {
+                          id
                           number
-                          body
                           state
-                          repository { name }
+                          repository { nameWithOwner }
                         }
                       }
                     }
@@ -57,7 +57,7 @@ jobs:
             exit 1
           fi
 
-          # Extract blocked items into a temp file (avoids subshell pipe issue)
+          # Extract blocked items into a temp file
           echo "$items_json" | jq -c '
             [.data.node.items.nodes[] |
              select(.fieldValueByName.optionId == "'"$BLOCKED_ID"'") |
@@ -72,84 +72,68 @@ jobs:
             exit 0
           fi
 
-          # Resolve repo name to issue prefix
-          resolve_prefix() {
-            case "$1" in
-              hhh-contracts-service)   echo "CS" ;;
-              hhh-ships-service)       echo "SHIPS" ;;
-              hhh-maps-service)        echo "MAPS" ;;
-              hhh-graphs-service)      echo "GRAPHS" ;;
-              hhh-routes-service)      echo "ROUTES" ;;
-              hhh-auth-service)        echo "AUTH" ;;
-              hhh-frontend)            echo "FE" ;;
-              hhh-backoffice-frontend) echo "BO" ;;
-              hhh-main)               echo "MAIN" ;;
-              *)                      echo "" ;;
-            esac
-          }
-
-          # Resolve issue prefix to repo name
-          resolve_repo() {
-            case "$1" in
-              CS)          echo "hhh-contracts-service" ;;
-              SHIPS)       echo "hhh-ships-service" ;;
-              MAPS|SETUP)  echo "hhh-maps-service" ;;
-              GRAPHS)      echo "hhh-graphs-service" ;;
-              ROUTES)      echo "hhh-routes-service" ;;
-              AUTH)        echo "hhh-auth-service" ;;
-              FE)          echo "hhh-frontend" ;;
-              BO)          echo "hhh-backoffice-frontend" ;;
-              MAIN)        echo "hhh-main" ;;
-              *)           echo "" ;;
-            esac
-          }
-
-          # Process each blocked item using a for loop (no subshell)
+          # Process each blocked item
           num_items=$(jq 'length' /tmp/blocked.json)
           for (( i=0; i<num_items; i++ )); do
             item_id=$(jq -r ".[$i].id" /tmp/blocked.json)
-            repo_name=$(jq -r ".[$i].content.repository.name" /tmp/blocked.json)
+            issue_node_id=$(jq -r ".[$i].content.id" /tmp/blocked.json)
+            repo_full=$(jq -r ".[$i].content.repository.nameWithOwner" /tmp/blocked.json)
             issue_number=$(jq -r ".[$i].content.number" /tmp/blocked.json)
-            body=$(jq -r ".[$i].content.body // \"\"" /tmp/blocked.json)
 
-            prefix=$(resolve_prefix "$repo_name")
             echo ""
-            echo "=== Checking ${prefix}-${issue_number} ($repo_name#$issue_number) ==="
+            echo "=== Checking $repo_full#$issue_number ==="
 
-            # Extract dependencies from "**Depends on:**" line (strip \r from Windows line endings)
-            deps_line=$(echo "$body" | grep -oP '\*\*Depends on:\*\*\s*\K.+' | tr -d '\r' || true)
+            # Query blockedBy relationships via GraphQL
+            blockers_json=$(gh api graphql -f query='
+              query {
+                node(id: "'"$issue_node_id"'") {
+                  ... on Issue {
+                    blockedBy(first: 20) {
+                      nodes {
+                        number
+                        state
+                        repository { nameWithOwner }
+                      }
+                    }
+                  }
+                }
+              }
+            ')
 
-            if [ -z "$deps_line" ]; then
-              echo "  No 'Depends on:' found in issue body, skipping."
+            blocker_count=$(echo "$blockers_json" | jq '.data.node.blockedBy.nodes | length')
+
+            if [ "$blocker_count" -eq 0 ]; then
+              echo "  No blockedBy relationships found, moving to Ready."
+              gh api graphql -f query='
+                mutation {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "'"$PROJECT_ID"'"
+                    itemId: "'"$item_id"'"
+                    fieldId: "'"$STATUS_FIELD_ID"'"
+                    value: { singleSelectOptionId: "'"$READY_ID"'" }
+                  }) { projectV2Item { id } }
+                }
+              '
               continue
             fi
 
-            echo "  Dependencies: $deps_line"
+            echo "  Blockers: $blocker_count"
 
             all_resolved=true
-            IFS=',' read -ra dep_array <<< "$deps_line"
-            for dep in "${dep_array[@]}"; do
-              dep=$(echo "$dep" | xargs)
-              dep_prefix=$(echo "$dep" | grep -oP '^[A-Z]+' || true)
-              dep_number=$(echo "$dep" | grep -oP '[0-9]+$' || true)
-              dep_repo=$(resolve_repo "$dep_prefix")
+            echo "$blockers_json" | jq -c '.data.node.blockedBy.nodes[]' > /tmp/blockers_$i.json
+            while IFS= read -r blocker; do
+              b_repo=$(echo "$blocker" | jq -r '.repository.nameWithOwner')
+              b_num=$(echo "$blocker" | jq -r '.number')
+              b_state=$(echo "$blocker" | jq -r '.state')
+              echo "  $b_repo#$b_num -> $b_state"
 
-              if [ -z "$dep_repo" ] || [ -z "$dep_number" ]; then
-                echo "  Could not resolve dependency: $dep"
-                all_resolved=false
-                continue
-              fi
-
-              state=$(gh issue view "$dep_number" --repo "$ORG/$dep_repo" --json state -q '.state' 2>/dev/null || echo "UNKNOWN")
-              echo "  $dep ($dep_repo#$dep_number) -> $state"
-
-              if [ "$state" != "CLOSED" ]; then
+              if [ "$b_state" != "CLOSED" ]; then
                 all_resolved=false
               fi
-            done
+            done < /tmp/blockers_$i.json
 
             if [ "$all_resolved" = true ]; then
-              echo "  ✅ All dependencies resolved! Moving to Ready."
+              echo "  ✅ All blockers resolved! Moving to Ready."
               gh api graphql -f query='
                 mutation {
                   updateProjectV2ItemFieldValue(input: {
