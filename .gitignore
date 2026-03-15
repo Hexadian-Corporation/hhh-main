@@ -9,4 +9,4 @@ dist/
 .pytest_cache/
 .tmp/
 .vscode/
-.github/
+.github/instructions/
