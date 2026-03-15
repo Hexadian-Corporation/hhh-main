@@ -245,30 +245,36 @@ All code contributions must:
 
 | Tool | Purpose |
 |------|---------|
-| `uv` | Python package manager (replaces pip/poetry) |
+| `uv` | Python package manager + project CLI |
+| `uv run hhh` | Monorepo CLI: `up`, `down`, `logs`, `setup`, `sync`, `start` |
 | `ruff` | Python linter + formatter |
 | `pytest` | Python test runner |
 | `diff-cover` | PR-only coverage enforcement (changed lines only) |
 | `vite` | Frontend dev server + bundler |
-| `docker compose` | Full-stack orchestration |
+| `docker compose` | Full-stack orchestration (wrapped by `uv run hhh up`) |
 | `gh` CLI | GitHub issue/PR/project management |
 
 ## Common Commands
 
 ```bash
-# Start all services
-docker compose up -d
+# Start all services (Docker)
+uv run hhh up
+
+# Stop all services
+uv run hhh down
+
+# Local setup (first time: submodules + deps)
+uv run hhh setup
+
+# Run a backend with hot-reload
+cd hhh-contracts-service && uv run uvicorn src.main:app --reload --port 8001
 
 # Run Python tests in a service
 cd hhh-contracts-service && uv run pytest
 
 # Run Python linter
-cd hhh-contracts-service && uv run --with ruff ruff check .
+cd hhh-contracts-service && uv run ruff check .
 
 # Run frontend dev server
 cd hhh-frontend && npm run dev
-
-# Create/manage GitHub issues
-gh issue create --repo Hexadian-Corporation/hhh-contracts-service --title "feat(contracts): add domain models" --body-file body.md --label "feature,backend" --milestone "M1: ..."
-gh project item-add 1 --owner Hexadian-Corporation --url <issue-url>
 ```
