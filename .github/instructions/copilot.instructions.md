@@ -40,6 +40,8 @@ hexadian-hauling-helper/
 │   ├── labels.yml                   # Synced label definitions
 │   ├── PROJECT_BOARD.md             # Project board reference
 │   └── workflows/                   # Workflows: pr-title, sync-submodules, auto-unblock
+├── docs/
+│   └── brand-assets/               # Hexadian corporate brand images (logos, backgrounds)
 ├── hhh-contracts-service/           # Submodule → Hexadian-Corporation/hhh-contracts-service
 ├── hhh-ships-service/               # Submodule → Hexadian-Corporation/hhh-ships-service
 ├── hhh-maps-service/                # Submodule → Hexadian-Corporation/hhh-maps-service
