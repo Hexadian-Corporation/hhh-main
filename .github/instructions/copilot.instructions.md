@@ -357,7 +357,83 @@ uv run hhh hotdeploy
 uv run hhh logs contracts
 ```
 
+## Security & Access Control
+
+### Repository Visibility & Access Policy
+
+All repositories are **public** (visible and cloneable by anyone), but protected by the following access controls:
+
+| Control | Configuration |
+|---------|---|
+| **Visibility** | Public (view + clone allowed) |
+| **Push permissions** | Restricted to 3 authorized users only |
+| **PR requirements** | All changes must go through PR + CODEOWNERS review |
+| **Direct commits** | Disabled for all users except authorized 3 |
+
+### Authorized Users
+
+Only these **3 GitHub users** can push directly to the `main` branch or approve PRs:
+
+- **@Arkaivos**
+- **@christianlc00**
+- **@naldwax**
+
+### Branch Protection Rules
+
+All 11 public repositories have identical branch protection on `main`:
+
+| Rule | Status |
+|------|--------|
+| `CODEOWNERS` file | ✅ Exists in all repos |
+| `CODEOWNERS` reviews required | ✅ Yes (one of the 3 users) |
+| Push restricted to | Arkaivos, christianlc00, naldwax |
+| Force push allowed | ❌ No |
+| Allow deletions | ❌ No |
+| Required status checks | ✅ Yes (Lint, Tests, PR Title, Secret Scan) |
+| Dismiss stale PR reviews | ❌ No |
+| Enforce up-to-date branches | ✅ Yes (strict mode) |
+| Enforce on admins | ❌ No (admins bypass, but use CODEOWNERS) |
+
+### CODEOWNERS
+
+Every public repository contains a `CODEOWNERS` file at the root with:
+
+```
+* @Arkaivos @christianlc00 @naldwax
+```
+
+This requires that **any change to any file** must be approved by at least one of these 3 users before merge.
+
+### Effect
+
+- ✅ **Anyone** can fork, clone, and open PRs
+- ✅ **Only these 3** can merge to `main` (via PR approval)
+- ❌ **Nobody else** can push directly to `main` or approve PRs
+- ❌ **No force pushes** allowed, even by admins
+- ✅ **All CI checks** must pass before merge (Lint, Tests, PR Title, Secret Scan)
+
+### How to Apply to New Repositories
+
+When adding a new repository to the organization:
+
+1. **Ensure it's Public** — Visibility = Public (visible to everyone)
+2. **Create CODEOWNERS file:**
+   ```bash
+   echo "* @Arkaivos @christianlc00 @naldwax" > CODEOWNERS
+   ```
+3. **Enable branch protection:**
+   ```bash
+   gh api repos/Hexadian-Corporation/<repo>/branches/main/protection \
+     --method PATCH \
+     -f 'restrictions[users][0]=Arkaivos' \
+     -f 'restrictions[users][1]=christianlc00' \
+     -f 'restrictions[users][2]=naldwax'
+   ```
+
+---
+
 ## Maintenance Rules
 
 - **Keep READMEs up to date.** When you add, remove, or change commands, environment variables, API endpoints, or architecture — update the README of the affected repo. The README is the source of truth for developers.
 - **Keep the CLI service registry up to date.** When adding or removing a service/submodule, update `SERVICES`, `FRONTENDS`, `COMPOSE_SERVICE_MAP`, and `SERVICE_ALIASES` in `hhh_cli/__init__.py`, plus the `docker-compose.yml` entry.
+- **Enforce security policies on new repos.** When creating a new repository, ensure it follows the Security & Access Control rules (public visibility, CODEOWNERS, branch protection, push restrictions).
