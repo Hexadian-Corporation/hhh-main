@@ -189,10 +189,12 @@ Unique index on `code`. Case-insensitive index on `name`. TTL application cache 
 
 **User model:** `id`, `username`, `email`, `hashed_password`, `roles` (default: `["user"]`), `is_active`, `rsi_handle`, `rsi_verified`, `rsi_verification_code`
 
-**RSI verification flow:**
-1. `POST /auth/verify/start` — generates a unique verification code, user puts it in their RSI profile bio
-2. `POST /auth/verify/confirm` — service fetches `robertsspaceindustries.com/citizens/{handle}`, checks for the code
-3. `User.rsi_verified` is set to `true` on success
+**RSI verification flow (implemented — AUTH-1):**
+1. `POST /auth/verify/start?user_id={id}` — body: `{"rsi_handle": "..."}`. Generates a human-readable verification string (`Hexadian account validation code: word-word-word-word-word-word`), stores it in `rsi_verification_code`, returns it to the user.
+2. User pastes the full string into their RSI profile bio at `robertsspaceindustries.com/account/profile`.
+3. `POST /auth/verify/confirm?user_id={id}` — service fetches `robertsspaceindustries.com/citizens/{handle}`, parses the bio from the HTML, checks that the full verification string appears as a substring. Sets `rsi_verified = true` on success.
+
+**Bio HTML parsing:** The service scrapes the RSI profile page and extracts bio text from `<div class="entry bio"><div class="value">...</div></div>`. This is fragile and may break if RSI changes their HTML (see BUG-009).
 
 Handle validation: `^[A-Za-z0-9_-]{3,30}$` (strict, to prevent SSRF).
 
