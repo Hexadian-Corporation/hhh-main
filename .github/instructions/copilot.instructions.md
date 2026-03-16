@@ -444,3 +444,8 @@ When adding a new repository to the organization:
 - **Keep READMEs up to date.** When you add, remove, or change commands, environment variables, API endpoints, or architecture — update the README of the affected repo. The README is the source of truth for developers.
 - **Keep the CLI service registry up to date.** When adding or removing a service/submodule, update `SERVICES`, `FRONTENDS`, `COMPOSE_SERVICE_MAP`, and `SERVICE_ALIASES` in `hhh_cli/__init__.py`, plus the `docker-compose.yml` entry.
 - **Enforce security policies on new repos.** When creating a new repository, ensure it follows the Security & Access Control rules (public visibility, CODEOWNERS, branch protection, push restrictions).
+
+## Organization Profile Maintenance
+
+- **Keep the org profile README up to date.** When repositories, ports, architecture, workflows, security policy, or ownership change, update Hexadian-Corporation/.github/profile/README.md in the public .github repo.
+- **Treat the org profile as canonical org summary.** Ensure descriptions in this repo remain consistent with the organization profile README.
