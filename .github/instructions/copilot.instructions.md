@@ -118,6 +118,22 @@ Both frontends share the intended stack (being set up):
 - **Database-per-service** pattern — each service has its own DB (e.g., `hhh_contracts`, `hhh_maps`, `hexadian_auth`)
 - Docker images use `mirror.gcr.io/library/` prefix for base images
 
+### Docker Compose
+
+**Compose project names:**
+- `hexadian-hauling-helper` — main stack (set via `name:` in `docker-compose.yml`)
+- `hexadian-auth-service` — standalone auth stack
+
+**3-tier network architecture:**
+
+| Network | Compose alias | `name:` | Members | Purpose |
+|---------|--------------|---------|---------|--------|
+| `hhh-inner-net` | — | `hexadian-hauling-helper-inner-net` | mongo1/2/3, mongo-init, all backends | DB isolation (`internal: true`) |
+| `hhh-outer-net` | — | `hexadian-hauling-helper-outer-net` | all backends, both frontends | Frontends → backends (no DB access) |
+| `hexadian-net` | — | `hexadian-shared-net` | all backends, both frontends | Cross-project (auth-service ↔ H³ stack) |
+
+Auth service has its own DB isolation: `auth-inner-net` (`hexadian-auth-inner-net`, `internal: true`) for auth-mongo, and connects to `hexadian-shared-net` for cross-project communication.
+
 ## Domain Context
 
 ### Contracts Service — Hauling Contracts (Catalog)
@@ -125,7 +141,7 @@ Both frontends share the intended stack (being set up):
 A `Contract` represents an **available contract** in the catalog (not an accepted one).
 
 - **Contract** — `id`, `title`, `description`, `status` (draft/active/expired/cancelled), `faction`, `reward_uec`, `collateral_uec`, `deadline`, `hauling_orders` (list), `requirements`, `created_at`, `updated_at`
-- **HaulingOrder** — `commodity`, `scu_min`, `scu_max`, `max_container_scu`, `pickup_location_id`, `delivery_location_id`
+- **HaulingOrder** — `commodity_id`, `scu_min`, `scu_max`, `max_container_scu`, `pickup_location_id`, `delivery_location_id`
 - **Requirements** — `min_reputation` (0–5 int), `required_ship_tags` (list[str]), `max_crew_size` (int)
 
 **Status values:** `draft` | `active` | `expired` | `cancelled`
@@ -171,10 +187,10 @@ Unique index on `code`. Case-insensitive index on `name`. TTL application cache 
 
 ### Auth Service — User & RSI Verification
 
-**User model:** `id`, `username`, `email`, `hashed_password`, `roles` (default: `["user"]`), `is_active`
+**User model:** `id`, `username`, `email`, `hashed_password`, `roles` (default: `["user"]`), `is_active`, `rsi_handle`, `rsi_verified`, `rsi_verification_code`
 
-**RSI verification flow (not yet implemented — AUTH-1):**
-1. `POST /auth/verify/start` — generates a unique code, user puts it in their RSI profile bio
+**RSI verification flow:**
+1. `POST /auth/verify/start` — generates a unique verification code, user puts it in their RSI profile bio
 2. `POST /auth/verify/confirm` — service fetches `robertsspaceindustries.com/citizens/{handle}`, checks for the code
 3. `User.rsi_verified` is set to `true` on success
 
@@ -227,11 +243,18 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 
 | Milestone | Repo(s) | Description |
 |-----------|---------|-------------|
-| M0: Project Setup | hexadian-hauling-helper, hhh-maps-service | Board config, seed locations |
+| M0: Project Setup | hexadian-hauling-helper, hhh-maps-service, hhh-commodities-service | Board config, seed locations, seed commodities |
 | M1: Hauling Contracts — Domain & API | hhh-contracts-service | Enrich domain, DTOs, mappers, PUT endpoint, CORS, MongoDB, tests |
 | M2: Backoffice — Contract Management | hhh-backoffice-frontend | Setup, types/API client, list page, edit page (3-tab form) |
 | M3: Frontend — Contract Creation | hhh-frontend | Setup, types/API client, landing page, create form (3-tab) |
 | M4: Auth — RSI Account Verification | hexadian-auth-service | Verify endpoint (code generation + RSI profile scraping) |
+| M5: Maps — CRUD Enhancements | hhh-maps-service | Search endpoint, location hierarchy, CRUD improvements |
+| M6: Commodities — Service & API | hhh-commodities-service, hexadian-hauling-helper | Domain model, full CRUD stack, indexes, cache, submodule integration |
+| M7: Backoffice — Location & Commodity Management | hhh-backoffice-frontend | Location and commodity CRUD pages in backoffice |
+| M8: Contract Forms — Entity Reference Autocomplete | hhh-contracts-service, hhh-frontend, hhh-backoffice-frontend | Location and commodity autocomplete in contract forms |
+| M9: Database Indexes & Caching | all backend services | MongoDB indexes + TTL application cache per service |
+| M10: Dashboards & Browsing | hhh-frontend, hhh-backoffice-frontend | Dashboard pages and browsing views |
+| M11: Corporate Branding & Visual Identity | hhh-frontend, hhh-backoffice-frontend | Hexadian brand assets, typography, color palette |
 
 ### Labels
 
