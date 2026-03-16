@@ -61,7 +61,7 @@ hexadian-hauling-helper/
 
 **hexadian-hauling-helper issue & PR title format:** `<type>(main): description` (e.g., `ci(main): add auto-unblock workflow`)
 
-**hexadian-hauling-helper quality standards:** CI only runs `Validate PR Title`. No lint/test jobs (no application code in this repo). Squash merge only.
+**hexadian-hauling-helper quality standards:** CI only runs `Validate PR Title` + `Secret Scan`. No lint/test jobs (no application code in this repo). Squash merge only.
 
 ## Architecture
 
@@ -302,7 +302,7 @@ All code contributions must:
 2. **Pass linting** — Python: `ruff check .` / TypeScript: `npm run lint`
 3. **Have ≥90% test coverage on changed lines** — enforced via `diff-cover` on PR diffs (not whole-repo thresholds)
 4. **Type-check cleanly** — Python: type hints / TypeScript: `tsc --noEmit`
-5. **Pass CI** — All checks (`Lint & Format`/`Lint & Type Check` + `Tests & Coverage` + `Validate PR Title`) must pass before merge
+5. **Pass CI** — All checks (`Lint & Format`/`Lint & Type Check` + `Tests & Coverage` + `Validate PR Title` + `Secret Scan`) must pass before merge
 6. **Branch up to date** — PR branch must be up to date with `main` (strict mode enabled)
 7. **PR title format** — Must match `<type>(<scope>): description` (e.g., `feat(contracts): add domain models`). Issue title = PR title — use the same format for both.
 8. **No review required** — approving review count set to 0 (Copilot agent PRs can merge without external reviewer)
