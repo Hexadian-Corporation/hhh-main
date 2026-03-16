@@ -385,7 +385,7 @@ All 11 public repositories have identical branch protection on `main`:
 | Rule | Status |
 |------|--------|
 | `CODEOWNERS` file | ✅ Exists in all repos |
-| `CODEOWNERS` reviews required | ✅ Yes (one of the 3 users) |
+| `CODEOWNERS` reviews required | ✅ Yes (1+ approval from the 3 users) |
 | Push restricted to | Arkaivos, christianlc00, naldwax |
 | Force push allowed | ❌ No |
 | Allow deletions | ❌ No |
@@ -393,6 +393,12 @@ All 11 public repositories have identical branch protection on `main`:
 | Dismiss stale PR reviews | ❌ No |
 | Enforce up-to-date branches | ✅ Yes (strict mode) |
 | Enforce on admins | ❌ No (admins bypass, but use CODEOWNERS) |
+
+**PR Merge Requirements (strictly enforced):**
+- ✅ 1+ approval from CODEOWNERS (@Arkaivos, @christianlc00, or @naldwax)
+- ✅ All required status checks passing (Lint, Tests, PR Title, Secret Scan)
+- ✅ Branch up to date with `main` (strict mode)
+- ❌ **Nobody else can merge** — only CODEOWNERS can approve and merge PRs
 
 ### CODEOWNERS
 
@@ -407,10 +413,11 @@ This requires that **any change to any file** must be approved by at least one o
 ### Effect
 
 - ✅ **Anyone** can fork, clone, and open PRs
-- ✅ **Only these 3** can merge to `main` (via PR approval)
-- ❌ **Nobody else** can push directly to `main` or approve PRs
+- ✅ **Only CODEOWNERS** can merge PRs to `main` (1+ approval required)
+- ✅ All changes must pass **CI checks** (Lint, Tests, PR Title, Secret Scan)
+- ❌ **Nobody else** can push directly to `main` (push restrictions to 3 users)
 - ❌ **No force pushes** allowed, even by admins
-- ✅ **All CI checks** must pass before merge (Lint, Tests, PR Title, Secret Scan)
+- ❌ **No PR merges without CODEOWNER approval** — fully enforced
 
 ### How to Apply to New Repositories
 
