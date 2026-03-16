@@ -22,7 +22,9 @@ The workspace at `hexadian-hauling-helper` is a monorepo with **git submodules**
 | `hhh-frontend` | `Hexadian-Corporation/hhh-frontend` | 3000 | React 19 · TypeScript · Vite 8 | Player-facing frontend |
 | `hhh-backoffice-frontend` | `Hexadian-Corporation/hhh-backoffice-frontend` | 3001 | React 19 · TypeScript · Vite 8 | Admin backoffice |
 
-> **Standalone service (not a submodule):** `hexadian-auth-service` (`Hexadian-Corporation/hexadian-auth-service`) — port 8006, Python · FastAPI · MongoDB. User auth (register, login, JWT, RSI verification). Runs independently with its own MongoDB instance and docker-compose.
+> **Standalone service (not a submodule):** `hexadian-auth-service` (`Hexadian-Corporation/hexadian-auth-service`) — port 8006, Python · FastAPI · MongoDB. Centralized identity platform: user auth, JWT, RBAC (Groups→Roles→Permissions), RSI verification, authorization code flow. Includes two frontends as subdirectories: `auth-portal` (port 3003) and `auth-backoffice` (port 3002). Runs independently with its own MongoDB instance and docker-compose.
+
+> **Shared library (not a submodule):** `hexadian-auth-common` (`Hexadian-Corporation/hexadian-auth-common`) — pure Python package. Shared JWT validation (`decode_access_token`), `UserContext` dataclass, FastAPI auth dependencies (`JWTAuthDependency`, `require_permission`, `require_any_permission`), and error types. Installed in all H³ backend services via `uv add hexadian-auth-common @ git+https://github.com/Hexadian-Corporation/hexadian-auth-common.git`.
 
 The root `hexadian-hauling-helper` repo (`Hexadian-Corporation/hexadian-hauling-helper`) contains:
 - `docker-compose.yml` — orchestrates H³ services + MongoDB 3-node replica set (auth service runs standalone)
@@ -187,18 +189,42 @@ Each `HaulingOrder.pickup_location_id` and `delivery_location_id` reference a Lo
 
 Unique index on `code`. Case-insensitive index on `name`. TTL application cache (`cachetools.TTLCache`, maxsize=128, ttl=900s) for `list_all()` and `get()`. `Cache-Control: max-age=900` on GET endpoints.
 
-### Auth Service — User & RSI Verification
+### Auth Service — Centralized Identity Platform
 
-**User model:** `id`, `username`, `email`, `hashed_password`, `roles` (default: `["user"]`), `is_active`, `rsi_handle`, `rsi_verified`, `rsi_verification_code`
+**User model:** `id`, `username`, `hashed_password`, `group_ids` (list[str]), `is_active`, `rsi_handle`, `rsi_verified`, `rsi_verification_code`
+
+> **Note:** `email` field was removed (M12). `rsi_handle` is required on registration. `group_ids` replaces the old `roles` list.
+
+**RBAC model (3-level hierarchy):**
+- **Permission** — `id`, `code` (e.g., `contracts:read`), `description`
+- **Role** — `id`, `name`, `description`, `permission_ids` (list[str])
+- **Group** — `id`, `name`, `description`, `role_ids` (list[str])
+- **User** → Groups → Roles → Permissions (resolved at JWT refresh time)
+
+**Token architecture:**
+- **Access token** — JWT (HS256), 15 min TTL. Claims: `sub`, `username`, `groups`, `roles`, `permissions`, `rsi_handle`, `rsi_verified`, `iat`, `exp`
+- **Refresh token** — opaque UUID, 7 days TTL, stored in `refresh_tokens` collection with TTL index. Revocable. On refresh, permissions are re-resolved from DB.
+
+**Authorization code flow (redirect auth):**
+1. App redirects to `auth-portal/login?redirect_uri=<callback>&state=<random>`
+2. User authenticates on auth-portal
+3. Auth-portal generates single-use auth code (60s TTL), redirects to `redirect_uri?code=<code>&state=<state>`
+4. App calls `POST /auth/token/exchange {code, redirect_uri}` → `{access_token, refresh_token}`
+
+**Auth frontends (inside hexadian-auth-service repo):**
+- **auth-portal** (port 3003) — login, registration, RSI verification, password change
+- **auth-backoffice** (port 3002) — user management CRUD, RBAC management (permissions, roles, groups)
 
 **RSI verification flow (implemented — AUTH-1):**
-1. `POST /auth/verify/start?user_id={id}` — body: `{"rsi_handle": "..."}`. Generates a human-readable verification string (`Hexadian account validation code: word-word-word-word-word-word`), stores it in `rsi_verification_code`, returns it to the user.
-2. User pastes the full string into their RSI profile bio at `robertsspaceindustries.com/account/profile`.
-3. `POST /auth/verify/confirm?user_id={id}` — service fetches `robertsspaceindustries.com/citizens/{handle}`, parses the bio from the HTML, checks that the full verification string appears as a substring. Sets `rsi_verified = true` on success.
+1. `POST /auth/verify/start?user_id={id}` — body: `{"rsi_handle": "..."}`. Generates verification string, stores in `rsi_verification_code`.
+2. User pastes string into RSI profile bio.
+3. `POST /auth/verify/confirm?user_id={id}` — scrapes RSI profile, checks bio contains the string. Sets `rsi_verified = true`.
 
-**Bio HTML parsing:** The service scrapes the RSI profile page and extracts bio text from `<div class="entry bio"><div class="value">...</div></div>`. This is fragile and may break if RSI changes their HTML (see BUG-009).
+**Bio HTML parsing:** Extracts bio from `<div class="entry bio"><div class="value">...</div></div>`. Fragile — see BUG-009.
 
 Handle validation: `^[A-Za-z0-9_-]{3,30}$` (strict, to prevent SSRF).
+
+**JWT protection:** All H³ backend endpoints (except `/health`) require a valid JWT via `hexadian-auth-common` middleware. Both H³ frontends use the redirect auth flow.
 
 ## UI Design — Hexadian Branding
 
@@ -243,6 +269,10 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 
 **Priority field:** High (red), Medium (yellow), Low (green)
 
+<critical>
+**Every issue MUST be:** (1) added to this project board, (2) have Status set (`Ready` or `Blocked`), (3) have Priority set, and (4) have blocking relationships defined via native GitHub issue relationships (GraphQL `addBlockedBy`). See `gh-workflow.instructions.md` for the full mandatory checklist, field IDs, and bulk operation patterns.
+</critical>
+
 ### Milestones
 
 | Milestone | Repo(s) | Description |
@@ -259,6 +289,7 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 | M9: Database Indexes & Caching | all backend services | MongoDB indexes + TTL application cache per service |
 | M10: Dashboards & Browsing | hhh-frontend, hhh-backoffice-frontend | Dashboard pages and browsing views |
 | M11: Corporate Branding & Visual Identity | hhh-frontend, hhh-backoffice-frontend | Hexadian brand assets, typography, color palette |
+| M12: Auth - Centralized Identity Platform | hexadian-auth-service, hexadian-auth-common, all H³ services + frontends | JWT, RBAC, auth portal, auth backoffice, JWT protection for all services |
 
 ### Labels
 
