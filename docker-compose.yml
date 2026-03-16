@@ -80,6 +80,7 @@ services:
       - "8001:8001"
     environment:
       - HHH_CONTRACTS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
+      - HHH_CONTRACTS_JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
     depends_on:
       mongo1:
         condition: service_healthy
@@ -96,6 +97,7 @@ services:
       - "8002:8002"
     environment:
       - HHH_SHIPS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
+      - HHH_SHIPS_JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
     depends_on:
       mongo1:
         condition: service_healthy
@@ -112,6 +114,7 @@ services:
       - "8003:8003"
     environment:
       - HHH_MAPS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
+      - HHH_MAPS_JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
     depends_on:
       mongo1:
         condition: service_healthy
@@ -128,6 +131,7 @@ services:
       - "8004:8004"
     environment:
       - HHH_GRAPHS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
+      - HHH_GRAPHS_JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
     depends_on:
       mongo1:
         condition: service_healthy
@@ -144,6 +148,7 @@ services:
       - "8005:8005"
     environment:
       - HHH_ROUTES_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
+      - HHH_ROUTES_JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
       - HHH_ROUTES_CONTRACTS_SERVICE_URL=http://contracts-service:8001
       - HHH_ROUTES_SHIPS_SERVICE_URL=http://ships-service:8002
       - HHH_ROUTES_MAPS_SERVICE_URL=http://maps-service:8003
@@ -172,6 +177,7 @@ services:
       - "8007:8007"
     environment:
       - HHH_COMMODITIES_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
+      - HHH_COMMODITIES_JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
     depends_on:
       mongo1:
         condition: service_healthy
