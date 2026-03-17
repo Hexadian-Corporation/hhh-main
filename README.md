@@ -33,7 +33,7 @@ Microservices with hexagonal architecture (Ports & Adapters), each service in it
 
 ### JWT Secret
 
-All backend services must share the same JWT secret to validate tokens issued by the auth service. The `docker-compose.yml` reads a single `JWT_SECRET` variable from the host environment (or `.env` file) and maps it into each service's prefixed env var (e.g. `HHH_CONTRACTS_JWT_SECRET`).
+All backend services must share the same JWT secret to validate tokens issued by the auth service. The `docker-compose.yml` reads `HEXADIAN_AUTH_JWT_SECRET` from the host environment (or `.env` file) and passes it directly to every service.
 
 1. Copy the example env file:
    ```bash
@@ -41,10 +41,10 @@ All backend services must share the same JWT secret to validate tokens issued by
    ```
 2. Set a strong secret in `.env`:
    ```
-   JWT_SECRET=replace-with-a-secure-random-string
+   HEXADIAN_AUTH_JWT_SECRET=replace-with-a-secure-random-string
    ```
 
-> **Note:** If `JWT_SECRET` is not set, it defaults to `dev-secret-change-me`. Never use the default in production. The standalone `hexadian-auth-service` must be configured with the **same** secret via `HEXADIAN_AUTH_JWT_SECRET` in its own `docker-compose.yml` / `.env` file for token validation to work across all services.
+> **Note:** If `HEXADIAN_AUTH_JWT_SECRET` is not set, it defaults to `change-me-in-production`. Never use the default in production. The standalone `hexadian-auth-service` uses the same `HEXADIAN_AUTH_JWT_SECRET` variable, so a single value in `.env` configures all services.
 
 ## Quick Start (first use)
 
