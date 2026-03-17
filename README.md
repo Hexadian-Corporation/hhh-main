@@ -138,3 +138,137 @@ git submodule status
 ## Organization
 
 GitHub Organization: [Hexadian-Corporation](https://github.com/Hexadian-Corporation)
+
+---
+
+## Authentication & Authorization
+
+All services are protected by JWT-based authentication via `hexadian-auth-common`. Permissions are embedded in the JWT token and enforced per-endpoint using `require_permission()` / `require_any_permission()` FastAPI dependencies.
+
+### Application Registration Flow
+
+When a user registers from a frontend, the auth portal receives an `app_id` and `app_signature` (HMAC-SHA256) to auto-assign the user to the appropriate groups.
+
+| Frontend | `app_id` | Signing secret env var |
+|----------|----------|------------------------|
+| hhh-frontend | `hhh-frontend` | `HEXADIAN_AUTH_APP_SIGNING_SECRET` |
+| hhh-backoffice-frontend | `hhh-backoffice` | `HEXADIAN_AUTH_APP_SIGNING_SECRET` |
+
+The auth service looks for groups with `auto_assign_apps` containing the provided `app_id`. Currently, the **Users** group auto-assigns for both `hhh-frontend` and `hhh-backoffice`.
+
+### Roles & Groups (seed data)
+
+| Role | Permissions | Description |
+|------|-------------|-------------|
+| **Member** | 8 — `contracts:read`, `contracts:write`, `locations:read`, `commodities:read`, `ships:read`, `graphs:read`, `routes:read`, `users:read` | Default for new users |
+| **Content Manager** | 18 — all `read`/`write`/`delete` on 6 content resources | Full content management |
+| **Super Admin** | 22 — all permissions | Full system access |
+
+| Group | Role(s) | Auto-assign apps | Description |
+|-------|---------|------------------|-------------|
+| **Users** | Member | `hhh-frontend`, `hhh-backoffice` | Auto-assigned on registration |
+| **Admins** | Super Admin | _(none)_ | Manually assigned |
+
+### All Permissions (22 total)
+
+#### Content permissions (18)
+
+| Resource | Read | Write | Delete |
+|----------|------|-------|--------|
+| Contracts | `contracts:read` | `contracts:write` | `contracts:delete` |
+| Locations | `locations:read` | `locations:write` | `locations:delete` |
+| Commodities | `commodities:read` | `commodities:write` | `commodities:delete` |
+| Ships | `ships:read` | `ships:write` | `ships:delete` |
+| Graphs | `graphs:read` | `graphs:write` | `graphs:delete` |
+| Routes | `routes:read` | `routes:write` | `routes:delete` |
+
+#### Admin permissions (4)
+
+| Permission | Purpose |
+|------------|---------|
+| `users:read` | List users |
+| `users:write` | Create/update users |
+| `users:admin` | Delete users, reset passwords, assign groups |
+| `rbac:manage` | Manage permissions, roles, groups |
+
+### API Endpoints & Required Permissions
+
+#### Contracts Service (`:8001`)
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| GET | `/contracts` | `contracts:read` |
+| GET | `/contracts/{id}` | `contracts:read` |
+| POST | `/contracts` | `contracts:write` |
+| PUT | `/contracts/{id}` | `contracts:write` |
+| DELETE | `/contracts/{id}` | `contracts:delete` |
+
+#### Ships Service (`:8002`)
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| GET | `/ships` | `ships:read` |
+| GET | `/ships/{id}` | `ships:read` |
+| POST | `/ships` | `ships:write` |
+| DELETE | `/ships/{id}` | `ships:delete` |
+
+#### Maps Service (`:8003`)
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| GET | `/locations` | `locations:read` |
+| GET | `/locations/{id}` | `locations:read` |
+| GET | `/locations/search?q=` | `locations:read` |
+| POST | `/locations` | `locations:write` |
+| PUT | `/locations/{id}` | `locations:write` |
+| DELETE | `/locations/{id}` | `locations:delete` |
+
+#### Graphs Service (`:8004`)
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| GET | `/graphs` | `graphs:read` |
+| GET | `/graphs/{id}` | `graphs:read` |
+| POST | `/graphs` | `graphs:write` |
+| DELETE | `/graphs/{id}` | `graphs:delete` |
+
+#### Routes Service (`:8005`)
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| GET | `/routes` | `routes:read` |
+| GET | `/routes/{id}` | `routes:read` |
+| POST | `/routes/optimize` | `routes:write` |
+| DELETE | `/routes/{id}` | `routes:delete` |
+
+#### Commodities Service (`:8007`)
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| GET | `/commodities` | `commodities:read` |
+| GET | `/commodities/{id}` | `commodities:read` |
+| GET | `/commodities/search?q=` | `commodities:read` |
+| POST | `/commodities` | `commodities:write` |
+| PUT | `/commodities/{id}` | `commodities:write` |
+| DELETE | `/commodities/{id}` | `commodities:delete` |
+
+#### Auth Service (`:8006`)
+
+| Method | Endpoint | Permission | Notes |
+|--------|----------|------------|-------|
+| POST | `/auth/register` | _(public)_ | |
+| POST | `/auth/login` | _(public)_ | |
+| POST | `/auth/token/refresh` | _(public)_ | |
+| POST | `/auth/token/revoke` | _(public)_ | |
+| POST | `/auth/authorize` | _(public)_ | |
+| POST | `/auth/token/exchange` | _(public)_ | |
+| POST | `/auth/password/forgot` | _(public)_ | |
+| GET | `/auth/users` | `users:read` | |
+| GET | `/auth/users/{id}` | _(self)_ or `users:read` | Own profile always accessible |
+| PUT | `/auth/users/{id}` | _(self)_ or `users:admin` | Own profile always editable |
+| DELETE | `/auth/users/{id}` | `users:admin` | |
+| POST | `/auth/users/{id}/password-reset` | `users:admin` | |
+| POST | `/auth/verify/start` | _(authenticated)_ | Own RSI verification |
+| POST | `/auth/verify/confirm` | _(authenticated)_ | Own RSI verification |
+| POST | `/auth/password/change` | _(authenticated)_ | Own password only |
+| ALL | `/rbac/**` | `rbac:manage` | Except user-group assignment: `users:admin` |
