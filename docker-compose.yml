@@ -231,3 +231,4 @@ networks:
     name: hexadian-hauling-helper-outer-net
   hexadian-net:
     name: hexadian-shared-net
+    external: true
