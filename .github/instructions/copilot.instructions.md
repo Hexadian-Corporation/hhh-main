@@ -198,7 +198,7 @@ Unique index on `code`. Case-insensitive index on `name`. TTL application cache 
 > **Note:** `email` field was removed (M12). `rsi_handle` is required on registration. `group_ids` replaces the old `roles` list.
 
 **RBAC model (3-level hierarchy):**
-- **Permission** — `id`, `code` (e.g., `contracts:read`), `description`
+- **Permission** — `id`, `code` (e.g., `hhh:contracts:read`, `auth:rbac:manage`), `description`
 - **Role** — `id`, `name`, `description`, `permission_ids` (list[str])
 - **Group** — `id`, `name`, `description`, `role_ids` (list[str])
 - **User** → Groups → Roles → Permissions (resolved at JWT refresh time)
