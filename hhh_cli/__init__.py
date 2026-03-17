@@ -74,57 +74,6 @@ def _resolve_service(name: str) -> tuple[str, str]:
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# Default path to the standalone auth service repo (sibling directory).
-AUTH_DIR = ROOT.parent / "hexadian-auth-service"
-
-
-def _is_auth_running() -> bool:
-    """Check if the hexadian auth-service container is running."""
-    result = subprocess.run(
-        ["docker", "compose", "ps", "-q", "auth-service"],
-        cwd=AUTH_DIR,
-        capture_output=True,
-        text=True,
-    )
-    return bool(result.stdout.strip())
-
-
-def _ensure_auth(*, silent: bool = False) -> None:
-    """Start the standalone auth service if it is not already running.
-
-    Expects the hexadian-auth-service repo to be cloned at ``AUTH_DIR``.
-    If the directory does not exist, prints a warning and continues.
-    """
-    if not AUTH_DIR.exists():
-        if not silent:
-            print(
-                f"  WARNING: Auth service not found at {AUTH_DIR}\n"
-                "           Clone it with: git clone git@github.com:"
-                "Hexadian-Corporation/hexadian-auth-service.git "
-                f"{AUTH_DIR}\n"
-            )
-        return
-
-    if _is_auth_running():
-        if not silent:
-            print("  Auth service already running.")
-        return
-
-    if not silent:
-        print("  Starting auth service (standalone)...")
-    code = _run(["docker", "compose", "up", "--build", "-d"], cwd=AUTH_DIR)
-    if code != 0 and not silent:
-        print("  WARNING: Failed to start auth service.")
-
-
-def _stop_auth() -> None:
-    """Stop the standalone auth service if its repo exists."""
-    if not AUTH_DIR.exists():
-        return
-    if _is_auth_running():
-        print("  Stopping auth service (standalone)...")
-        _run(["docker", "compose", "down"], cwd=AUTH_DIR)
-
 
 def _remove_mongo_init() -> None:
     """Remove the stopped mongo-init container to keep `docker ps -a` clean."""
@@ -329,10 +278,6 @@ def start() -> None:
     """Start all services locally (auto-syncs if needed)."""
     print("=== H³ – Starting all services ===")
 
-    # Auth service (standalone, via Docker)
-    print("\n  Ensuring auth service is running (Docker)...")
-    _ensure_auth(silent=True)
-
     processes: list[tuple[str, subprocess.Popen]] = []
     for svc_name, port in SERVICES:
         svc_dir = ROOT / svc_name
@@ -373,8 +318,7 @@ def up() -> None:
     After cloning the repo, this is the only command needed:
         uv run hhh up
 
-    Result: MongoDB + 6 backend services + 2 frontends running in Docker,
-    plus a standalone auth service with its own MongoDB.
+    Result: MongoDB + 6 backend services + 2 frontends running in Docker.
     - Frontend:           http://localhost:3000
     - Backoffice:         http://localhost:3001
     - Contracts API:      http://localhost:8001
@@ -382,21 +326,16 @@ def up() -> None:
     - Maps API:           http://localhost:8003
     - Graphs API:         http://localhost:8004
     - Routes API:         http://localhost:8005
-    - Auth API:           http://localhost:8006 (standalone)
     - Commodities API:    http://localhost:8007
     """
     print("=== H³ – First-use setup & launch ===\n")
 
     # 1. Git submodules
-    print("[1/3] Initializing git submodules...")
+    print("[1/2] Initializing git submodules...")
     _run(["git", "submodule", "update", "--init", "--recursive"], cwd=ROOT)
 
-    # 2. Auth service (standalone)
-    print("\n[2/3] Ensuring auth service is running...")
-    _ensure_auth()
-
-    # 3. Docker compose build + up (each component in its own container)
-    print("\n[3/3] Building and starting all containers...")
+    # 2. Docker compose build + up (each component in its own container)
+    print("\n[2/2] Building and starting all containers...")
     print("       (MongoDB replica set + 6 services + 2 frontends)\n")
     code = _run(["docker", "compose", "up", "--build", "-d"], cwd=ROOT)
     if code != 0:
@@ -413,7 +352,6 @@ def up() -> None:
     print("  Maps API:           http://localhost:8003/docs")
     print("  Graphs API:         http://localhost:8004/docs")
     print("  Routes API:         http://localhost:8005/docs")
-    print("  Auth API:           http://localhost:8006/docs  (standalone)")
     print("  Commodities API:    http://localhost:8007/docs")
     print()
     print("  Stop:  uv run hhh down")
@@ -421,9 +359,8 @@ def up() -> None:
 
 
 def down() -> None:
-    """Stop all containers and clean up (including standalone auth)."""
+    """Stop all containers and clean up."""
     print("=== H³ – Stopping all containers ===")
-    _stop_auth()
     sys.exit(_run(["docker", "compose", "down"], cwd=ROOT))
 
 
@@ -442,12 +379,8 @@ def logs() -> None:
 
 
 def ps() -> None:
-    """Show status of all containers (including standalone auth)."""
-    _ensure_auth(silent=True)
+    """Show status of all HHH stack containers."""
     _run(["docker", "compose", "ps"], cwd=ROOT)
-    if AUTH_DIR.exists():
-        print("\n── Auth service (standalone) ──")
-        _run(["docker", "compose", "ps"], cwd=AUTH_DIR)
 
 
 def run_tests() -> None:
@@ -499,7 +432,6 @@ def restart(service_name: str) -> None:
     """
     sub_dir, compose_name = _resolve_service(service_name)
     print(f"=== H³ – Restarting {compose_name} ===\n")
-    _ensure_auth(silent=True)
     print(f"  -> Rebuilding {compose_name}...")
     code = _run(
         ["docker", "compose", "up", "--build", "--no-deps", "-d", compose_name],
@@ -525,8 +457,6 @@ def sync_service(service_name: str) -> None:
         sys.exit(1)
 
     print(f"=== H³ – Syncing {sub_dir} ===\n")
-
-    _ensure_auth(silent=True)
 
     # 1. Update the single submodule
     print(f"[1/3] Updating submodule {sub_dir}...")
@@ -575,8 +505,6 @@ def hotdeploy() -> None:
     Usage: uv run hhh hotdeploy
     """
     print("=== H\xb3 \u2013 Hot Deploy ===\n")
-
-    _ensure_auth(silent=True)
 
     # 1. Detect which submodules have upstream changes
     print("\u2500\u2500 Checking submodules for upstream changes \u2500\u2500\n")
