@@ -383,7 +383,7 @@ Only these **3 GitHub users** can push directly to the `main` branch or approve 
 
 ### Branch Protection Rules
 
-All 11 public repositories have identical branch protection on `main`:
+All 12 public repositories have identical branch protection on `main`:
 
 | Rule | Status |
 |------|--------|
@@ -392,7 +392,7 @@ All 11 public repositories have identical branch protection on `main`:
 | Push restricted to | Arkaivos, christianlc00, naldwax |
 | Force push allowed | ❌ No |
 | Allow deletions | ❌ No |
-| Required status checks | ✅ Yes (Lint, Tests, PR Title, Secret Scan) |
+| Required status checks | ✅ Yes (Lint, Tests, PR Title, Secret Scan) — all with `app_id: 15368` |
 | Dismiss stale PR reviews | ❌ No |
 | Enforce up-to-date branches | ✅ Yes (strict mode) |
 | Enforce on admins | ❌ No (admins bypass, but use CODEOWNERS) |
@@ -439,6 +439,7 @@ When adding a new repository to the organization:
      -f 'restrictions[users][1]=christianlc00' \
      -f 'restrictions[users][2]=naldwax'
    ```
+4. **Set required status checks with explicit `app_id: 15368`** — see `gh-workflow.instructions.md` for the full configuration patterns. Never use `app_id: null`.
 
 ---
 
