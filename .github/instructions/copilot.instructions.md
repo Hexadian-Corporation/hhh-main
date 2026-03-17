@@ -454,4 +454,3 @@ When adding a new repository to the organization:
 - **Treat the org profile as canonical org summary.** Ensure descriptions in this repo remain consistent with the organization profile README.
 
 Remember, before finishing: resolve any merge conflict and merge source (PR origin and destination) branch into current one.
-Remember, before finishing: resolve any merge conflict and merge source (PR origin and destination) branch into current one.
