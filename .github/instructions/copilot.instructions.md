@@ -1,4 +1,4 @@
-
+﻿
 <critical>Note: This is a living document and will be updated as we refine our processes. Always refer back to this for the latest guidelines. Update whenever necessary.</critical>
 
 # Copilot Instructions — H³ Hexadian Hauling Helper
@@ -25,6 +25,8 @@ The workspace at `hexadian-hauling-helper` is a monorepo with **git submodules**
 > **Standalone service (not a submodule):** `hexadian-auth-service` (`Hexadian-Corporation/hexadian-auth-service`) — port 8006, Python · FastAPI · MongoDB. Centralized identity platform: user auth, JWT, RBAC (Groups→Roles→Permissions), RSI verification, authorization code flow. Includes two frontends as subdirectories: `auth-portal` (port 3003) and `auth-backoffice` (port 3002). Runs independently with its own MongoDB instance and docker-compose.
 
 > **Shared library (not a submodule):** `hexadian-auth-common` (`Hexadian-Corporation/hexadian-auth-common`) — pure Python package. Shared JWT validation (`decode_access_token`), `UserContext` dataclass, FastAPI auth dependencies (`JWTAuthDependency`, `require_permission`, `require_any_permission`), and error types. Installed in all H³ backend services via `uv add hexadian-auth-common @ git+https://github.com/Hexadian-Corporation/hexadian-auth-common.git`.
+
+> **Shared library (not a submodule):** `hexadian-auth-common-php` (`Hexadian-Corporation/hexadian-auth-common-php`) — PHP Composer package. Native PHP counterpart of `hexadian-auth-common`: JWT validation (`firebase/php-jwt`), `UserContext` value object, PSR-15 middleware, token introspection client. Same JWT contract (`JWT_CONTRACT.md`). For PHP consumers of Hexadian Auth tokens.
 
 The root `hexadian-hauling-helper` repo (`Hexadian-Corporation/hexadian-hauling-helper`) contains:
 - `docker-compose.yml` — orchestrates H³ services + MongoDB 3-node replica set (auth service runs standalone)
@@ -290,6 +292,7 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 | M10: Dashboards & Browsing | hhh-frontend, hhh-backoffice-frontend | Dashboard pages and browsing views |
 | M11: Corporate Branding & Visual Identity | hhh-frontend, hhh-backoffice-frontend | Hexadian brand assets, typography, color palette |
 | M12: Auth - Centralized Identity Platform | hexadian-auth-service, hexadian-auth-common, all H³ services + frontends | JWT, RBAC, auth portal, auth backoffice, JWT protection for all services |
+| M13: Auth - Cross-Language & Token Introspection | hexadian-auth-common-php, hexadian-auth-common, hexadian-auth-service | PHP JWT library, JWT contract doc, token introspection endpoint |
 
 ### Labels
 
@@ -449,3 +452,4 @@ When adding a new repository to the organization:
 
 - **Keep the org profile README up to date.** When repositories, ports, architecture, workflows, security policy, or ownership change, update Hexadian-Corporation/.github/profile/README.md in the public .github repo.
 - **Treat the org profile as canonical org summary.** Ensure descriptions in this repo remain consistent with the organization profile README.
+Remember, before finishing: resolve any merge conflict and merge source (PR origin and destination) branch into current one.
