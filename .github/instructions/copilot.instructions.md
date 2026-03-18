@@ -230,32 +230,9 @@ Handle validation: `^[A-Za-z0-9_-]{3,30}$` (strict, to prevent SSRF).
 
 **JWT protection:** All H³ backend endpoints (except `/health`) require a valid JWT via `hexadian-auth-common` middleware. Both H³ frontends use the redirect auth flow.
 
-## UI Design — Hexadian Branding
+## UI Styling
 
-### Color Palette (CSS Custom Properties)
-
-```css
-:root {
-  --color-bg: #0a0e17;         /* Dark space background */
-  --color-surface: #111827;     /* Card / panel surface */
-  --color-border: #1f2937;      /* Subtle borders */
-  --color-accent: #06b6d4;      /* Cyan accent (primary actions) */
-  --color-success: #10b981;     /* Green */
-  --color-warning: #f59e0b;     /* Amber */
-  --color-danger: #ef4444;      /* Red */
-  --color-text: #e5e7eb;        /* Primary text */
-  --color-text-muted: #9ca3af;  /* Secondary text */
-}
-```
-
-### Status Badge Colors
-
-| Status | Color |
-|--------|-------|
-| draft | Gray |
-| active | Cyan (`--color-accent`) |
-| expired | Amber (`--color-warning`) |
-| cancelled | Red (`--color-danger`) |
+See `hexadian-ui-style.instructions.md` (in each frontend repo) for the canonical Hexadian corporate style guide (color palette, layout, typography, components, Tailwind classes). Canonical source: `hexadian-auth-service/.github/instructions/hexadian-ui-style.instructions.md`.
 
 ## Project Management
 
