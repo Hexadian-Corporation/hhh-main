@@ -28,6 +28,8 @@ The workspace at `hexadian-hauling-helper` is a monorepo with **git submodules**
 
 > **Shared library (not a submodule):** `hexadian-auth-common` (`Hexadian-Corporation/hexadian-auth-common`) — pure Python package. Shared JWT validation (`decode_access_token`), `UserContext` dataclass, FastAPI auth dependencies (`JWTAuthDependency`, `require_permission`, `require_any_permission`), and error types. Installed in all H³ backend services via `uv add hexadian-auth-common @ git+https://github.com/Hexadian-Corporation/hexadian-auth-common.git`.
 
+> **Shared library (not a submodule):** `hexadian-auth-client` (`Hexadian-Corporation/hexadian-auth-client`) — TypeScript monorepo (npm workspaces). Auth client SDK for frontend (and future backend/Angular) applications. Two packages: `@hexadian-corporation/auth-core` (pure TypeScript, zero framework deps — OAuth client, token storage, JWT decode, auth events) and `@hexadian-corporation/auth-react` (React 18/19 integration — `AuthProvider`, `useAuth`, `usePermissions`, `ProtectedRoute`). Published to GitHub Packages (`@hexadian-corporation` scope). Will replace inline auth code in all React frontends (hhh-frontend, hhh-backoffice, auth-portal, auth-backoffice).
+
 
 The root `hexadian-hauling-helper` repo (`Hexadian-Corporation/hexadian-hauling-helper`) contains:
 - `docker-compose.yml` — orchestrates H³ services + MongoDB 3-node replica set (auth service runs standalone)
@@ -270,6 +272,7 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 | M10: Dashboards & Browsing | hhh-frontend, hhh-backoffice-frontend | Dashboard pages and browsing views |
 | M11: Corporate Branding & Visual Identity | hhh-frontend, hhh-backoffice-frontend | Hexadian brand assets, typography, color palette |
 | M12: Auth - Centralized Identity Platform | hexadian-auth-service, hexadian-auth-common, all H³ services + frontends | JWT, RBAC, auth portal, auth backoffice, JWT protection for all services |
+| M5: Auth React SDK | hexadian-auth-client, hhh-frontend, hhh-backoffice-frontend, hexadian-auth-service, hexadian-hauling-helper | Extract auth integration into reusable `@hexadian-corporation/auth-core` and `@hexadian-corporation/auth-react` packages. Migrate existing frontends. |
 | M13: Auth - Cross-Language & Token Introspection | hexadian-auth-common, hexadian-auth-service | JWT contract doc, token introspection endpoint |
 
 ### Labels

@@ -19,6 +19,14 @@ Microservices with hexagonal architecture (Ports & Adapters), each service in it
 | `hhh-frontend` | 3000 | Main web application (React) |
 | `hhh-backoffice-frontend` | 3001 | Admin panel (React) |
 
+### Standalone Services & Shared Libraries
+
+| Repository | Type | Description |
+|---|---|---|
+| `hexadian-auth-service` | Standalone service (port 8006) | Centralized identity platform: JWT, RBAC, RSI verification, auth code flow |
+| `hexadian-auth-common` | Python library | Shared JWT validation + FastAPI auth dependencies for backend services |
+| `hexadian-auth-client` | TypeScript SDK (npm monorepo) | Auth client packages for frontends: `@hexadian-corporation/auth-core` (OAuth client, token storage, JWT decode) + `@hexadian-corporation/auth-react` (React integration: AuthProvider, useAuth, usePermissions, ProtectedRoute). Published to GitHub Packages. |
+
 ## Tech Stack
 
 - **Backend**: Python 3.11+, FastAPI, opyoid, pymongo, pydantic
