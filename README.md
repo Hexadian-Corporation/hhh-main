@@ -25,7 +25,7 @@ Microservices with hexagonal architecture (Ports & Adapters), each service in it
 |---|---|---|
 | `hexadian-auth-service` | Standalone service (port 8006) | Centralized identity platform: JWT, RBAC, RSI verification, auth code flow |
 | `hexadian-auth-common` | Python library | Shared JWT validation + FastAPI auth dependencies for backend services |
-| `hexadian-auth-client` | TypeScript SDK (npm monorepo) | Auth client packages for frontends: `@hexadian-corporation/auth-core` (OAuth client, token storage, JWT decode) + `@hexadian-corporation/auth-react` (React integration: AuthProvider, useAuth, usePermissions, ProtectedRoute). Published to GitHub Packages. |
+| `hexadian-auth-client` | TypeScript SDK (npm monorepo) | Auth client packages for frontends and backends: `@hexadian-corporation/auth-core` (OAuth client, token storage, JWT decode) + `@hexadian-corporation/auth-react` (React integration) + `@hexadian-corporation/auth-node` (server-side JWT verification, Express middleware, NestJS guards) + `@hexadian-corporation/auth-angular` (Angular 17+ AuthService, guards, interceptor). Published to GitHub Packages. |
 
 ## Tech Stack
 
