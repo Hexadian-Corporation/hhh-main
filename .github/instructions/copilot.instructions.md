@@ -28,7 +28,6 @@ The workspace at `hexadian-hauling-helper` is a monorepo with **git submodules**
 
 > **Shared library (not a submodule):** `hexadian-auth-common` (`Hexadian-Corporation/hexadian-auth-common`) — pure Python package. Shared JWT validation (`decode_access_token`), `UserContext` dataclass, FastAPI auth dependencies (`JWTAuthDependency`, `require_permission`, `require_any_permission`), and error types. Installed in all H³ backend services via `uv add hexadian-auth-common @ git+https://github.com/Hexadian-Corporation/hexadian-auth-common.git`.
 
-> **Shared library (not a submodule):** `hexadian-auth-common-php` (`Hexadian-Corporation/hexadian-auth-common-php`) — PHP Composer package. Native PHP counterpart of `hexadian-auth-common`: JWT validation (`firebase/php-jwt`), `UserContext` value object, PSR-15 middleware, token introspection client. Same JWT contract (`JWT_CONTRACT.md`). For PHP consumers of Hexadian Auth tokens.
 
 The root `hexadian-hauling-helper` repo (`Hexadian-Corporation/hexadian-hauling-helper`) contains:
 - `docker-compose.yml` — orchestrates H³ services + MongoDB 3-node replica set (auth service runs standalone)
@@ -271,7 +270,7 @@ URL: <https://github.com/orgs/Hexadian-Corporation/projects/1>
 | M10: Dashboards & Browsing | hhh-frontend, hhh-backoffice-frontend | Dashboard pages and browsing views |
 | M11: Corporate Branding & Visual Identity | hhh-frontend, hhh-backoffice-frontend | Hexadian brand assets, typography, color palette |
 | M12: Auth - Centralized Identity Platform | hexadian-auth-service, hexadian-auth-common, all H³ services + frontends | JWT, RBAC, auth portal, auth backoffice, JWT protection for all services |
-| M13: Auth - Cross-Language & Token Introspection | hexadian-auth-common-php, hexadian-auth-common, hexadian-auth-service | PHP JWT library, JWT contract doc, token introspection endpoint |
+| M13: Auth - Cross-Language & Token Introspection | hexadian-auth-common, hexadian-auth-service | JWT contract doc, token introspection endpoint |
 
 ### Labels
 
