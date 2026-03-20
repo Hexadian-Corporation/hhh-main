@@ -27,6 +27,7 @@ The workspace at `hexadian-hauling-helper` is a monorepo with **git submodules**
 | `hhh-graphs-service` | `Hexadian-Corporation/hhh-graphs-service` | 8004 | Python · FastAPI · MongoDB | Graph/analytics service |
 | `hhh-routes-service` | `Hexadian-Corporation/hhh-routes-service` | 8005 | Python · FastAPI · MongoDB | Route calculation (depends on contracts, ships, maps, graphs) |
 | `hhh-commodities-service` | `Hexadian-Corporation/hhh-commodities-service` | 8007 | Python · FastAPI · MongoDB | Commodity reference data (trade goods catalog) |
+| `hhh-dataminer` | `Hexadian-Corporation/hhh-dataminer` | 8008 | Python · FastAPI · MongoDB | Game data import orchestration (UEX Corp API) |
 | `hhh-frontend` | `Hexadian-Corporation/hhh-frontend` | 3000 | React 19 · TypeScript · Vite 8 | Player-facing frontend |
 | `hhh-backoffice-frontend` | `Hexadian-Corporation/hhh-backoffice-frontend` | 3001 | React 19 · TypeScript · Vite 8 | Admin backoffice |
 
@@ -61,6 +62,7 @@ hexadian-hauling-helper/
 ├── hhh-graphs-service/              # Submodule → Hexadian-Corporation/hhh-graphs-service
 ├── hhh-routes-service/              # Submodule → Hexadian-Corporation/hhh-routes-service
 ├── hhh-commodities-service/         # Submodule → Hexadian-Corporation/hhh-commodities-service
+├── hhh-dataminer/                   # Submodule → Hexadian-Corporation/hhh-dataminer
 ├── hhh-frontend/                    # Submodule → Hexadian-Corporation/hhh-frontend
 └── hhh-backoffice-frontend/         # Submodule → Hexadian-Corporation/hhh-backoffice-frontend
 ```

@@ -130,6 +130,7 @@ This format is intentionally identical for both issue titles and PR titles. When
 | hexadian-auth-service | `auth` | `feat(auth): RSI verification` |
 | hexadian-auth-common | `auth-common` | `feat(auth-common): scaffold package` |
 | hhh-commodities-service | `commodities` | `feat(commodities): add commodity CRUD` |
+| hhh-dataminer | `dataminer` | `feat(dataminer): UEX Corp API adapter` |
 | hhh-frontend | `frontend` | `feat(frontend): landing page` |
 | hhh-backoffice-frontend | `backoffice` | `feat(backoffice): contract list page` |
 | hexadian-hauling-helper | `main` | `ci(main): add auto-unblock workflow` |
@@ -152,7 +153,7 @@ Apply labels from the synced set: `domain`, `api`, `persistence`, `backend`, `fr
 
 Every repo has a `.github/workflows/ci.yml` that runs on PRs to `main`.
 
-### Python services (contracts, ships, maps, graphs, routes, auth, commodities)
+### Python services (contracts, ships, maps, graphs, routes, auth, commodities, dataminer)
 
 | Job | Name | What it does |
 |-----|------|-------------|

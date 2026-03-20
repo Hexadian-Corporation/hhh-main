@@ -16,6 +16,7 @@ Microservices with hexagonal architecture (Ports & Adapters), each service in it
 | `hhh-graphs-service` | 8004 | Travel graph and connectivity |
 | `hhh-routes-service` | 8005 | Route optimization engine |
 | `hhh-commodities-service` | 8007 | Commodity data management |
+| `hhh-dataminer` | 8008 | Game data import orchestration (UEX Corp API) |
 | `hhh-frontend` | 3000 | Main web application (React) |
 | `hhh-backoffice-frontend` | 3001 | Admin panel (React) |
 
@@ -88,6 +89,7 @@ Result:
 | Graphs API | http://localhost:8004/docs |
 | Routes API | http://localhost:8005/docs |
 | Commodities API | http://localhost:8007/docs |
+| Dataminer API | http://localhost:8008/docs |
 | Auth API (standalone) | http://localhost:8006/docs |
 
 ## CLI Reference

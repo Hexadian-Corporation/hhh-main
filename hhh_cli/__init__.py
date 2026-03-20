@@ -18,6 +18,7 @@ SERVICES = [
     ("hhh-graphs-service", 8004),
     ("hhh-routes-service", 8005),
     ("hhh-commodities-service", 8007),
+    ("hhh-dataminer", 8008),
 ]
 
 FRONTENDS = [
@@ -33,6 +34,7 @@ COMPOSE_SERVICE_MAP: dict[str, str] = {
     "hhh-graphs-service": "graphs-service",
     "hhh-routes-service": "routes-service",
     "hhh-commodities-service": "commodities-service",
+    "hhh-dataminer": "dataminer-service",
     "hhh-frontend": "frontend",
     "hhh-backoffice-frontend": "backoffice-frontend",
 }
@@ -45,6 +47,7 @@ SERVICE_ALIASES: dict[str, str] = {
     "graphs": "hhh-graphs-service",
     "routes": "hhh-routes-service",
     "commodities": "hhh-commodities-service",
+    "dataminer": "hhh-dataminer",
     "frontend": "hhh-frontend",
     "backoffice": "hhh-backoffice-frontend",
 }
@@ -353,6 +356,7 @@ def up() -> None:
     print("  Graphs API:         http://localhost:8004/docs")
     print("  Routes API:         http://localhost:8005/docs")
     print("  Commodities API:    http://localhost:8007/docs")
+    print("  Dataminer API:      http://localhost:8008/docs")
     print()
     print("  Stop:  uv run hhh down")
     print("  Logs:  uv run hhh logs")
