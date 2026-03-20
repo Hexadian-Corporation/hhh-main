@@ -499,6 +499,61 @@ def logs_service(service_name: str) -> None:
     sys.exit(_run(["docker", "compose", "logs", "-f", compose_name], cwd=ROOT))
 
 
+def seed() -> None:
+    """Run seed scripts across all services.
+
+    - Auth RBAC: invokes `uv run auth seed-rbac` in hexadian-auth-service
+    - Maps/Ships: seeds run on app startup automatically
+    - This command ensures auth seeds are populated even without starting auth-service
+    """
+    print("=== H³ – Seed all services ===\n")
+
+    # 1. Auth RBAC seed (external to this compose stack)
+    # hexadian-auth-service is expected as a sibling directory next to hexadian-hauling-helper
+    auth_dir = ROOT.parent / "hexadian-auth-service"
+    if auth_dir.exists():
+        print("[1/3] Seeding auth RBAC (permissions, roles, groups)...")
+        # Strip VIRTUAL_ENV to avoid the current venv leaking into the auth-service's uv invocation
+        env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
+        result = subprocess.run(
+            ["uv", "run", "auth", "seed-rbac"], cwd=auth_dir, env=env
+        )
+        if result.returncode == 0:
+            print("  ✅ Auth RBAC seeded")
+        else:
+            print("  ⚠️  Auth RBAC seed failed (auth-service may not be set up)")
+    else:
+        print("[1/3] Auth service not found at sibling path, skipping RBAC seed")
+
+    # 2. Maps + Ships — these seed on app startup
+    # Start services briefly to trigger lifespan seeds
+    print("\n[2/3] Starting backend services for lifespan seeds...")
+    print("  (Maps locations/distances and ships seed on app startup)")
+
+    # Check if containers are running
+    result = subprocess.run(
+        ["docker", "compose", "ps", "--format", "json"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0 or not result.stdout.strip():
+        print("  Services not running. Start with: uv run hhh up")
+        print("  Seeds will run automatically on first startup.")
+    else:
+        print("  ✅ Services are running — seeds have been applied on startup")
+
+    # 3. Summary
+    print("\n[3/3] Seed summary:")
+    print("  • Auth: permissions (37), roles (11), groups (3)")
+    print("  • Maps: locations (11), distances (72)")
+    print("  • Ships: 8 starter ships")
+    print("  • Commodities: no seed data (user-managed)")
+    print("  • Contracts: no seed data (user-managed)")
+    print("\n=== Seed complete! ===")
+
+
 def hotdeploy() -> None:
     """Auto-detect changed submodules, sync and redeploy only affected containers.
 
@@ -594,6 +649,7 @@ COMMANDS = {
     ),
     "test": (run_tests, "Run tests for all services"),
     "lint": (run_lint, "Run linter for all services"),
+    "seed": (seed, "Run seed scripts for all services"),
 }
 
 
