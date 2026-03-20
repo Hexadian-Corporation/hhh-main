@@ -30,3 +30,7 @@
 	path = hhh-commodities-service
 	url = https://github.com/Hexadian-Corporation/hhh-commodities-service.git
 	branch = main
+[submodule "hhh-dataminer"]
+	path = hhh-dataminer
+	url = https://github.com/Hexadian-Corporation/hhh-dataminer.git
+	branch = main
