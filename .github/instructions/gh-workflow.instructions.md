@@ -130,7 +130,7 @@ This format is intentionally identical for both issue titles and PR titles. When
 | hexadian-auth-service | `auth` | `feat(auth): RSI verification` |
 | hexadian-auth-common | `auth-common` | `feat(auth-common): scaffold package` |
 | hhh-commodities-service | `commodities` | `feat(commodities): add commodity CRUD` |
-| hhh-dataminer | `dataminer` | `feat(dataminer): UEX Corp API adapter` |
+| hhh-dataminer | `dataminer` | `feat(dataminer): add data source adapter` |
 | hhh-frontend | `frontend` | `feat(frontend): landing page` |
 | hhh-backoffice-frontend | `backoffice` | `feat(backoffice): contract list page` |
 | hexadian-hauling-helper | `main` | `ci(main): add auto-unblock workflow` |
