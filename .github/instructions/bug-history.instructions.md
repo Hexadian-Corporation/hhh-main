@@ -239,3 +239,100 @@ Where `payload.json` contains:
 **Lesson:** Always set `app_id: 15368` (GitHub Actions) explicitly when configuring required status checks via the API. Never rely on `app_id: null` auto-resolution — it silently breaks for any check name that hasn't been previously reported on the default branch. See `gh-workflow.instructions.md` for the canonical configuration patterns.
 
 **Corollary — never rename CI jobs via PR.** Even with the correct `app_id`, GitHub cannot match a required check name that has never been reported on `main`. If a PR renames a CI job (e.g., `Auth Portal Tests` → `Auth Portal Tests & Coverage`), the new name will freeze as "Expected — Waiting for status" because branch protection can't resolve it. Fix: push the CI rename directly to `main`, then update branch protection to the new name.
+
+---
+
+## BUG-012: Cross-service — JWT secret mismatch between auth-service and HHH services
+
+**Service:** All backend services | **Severity:** High
+
+**Symptom:** HHH services rejected valid JWTs issued by auth-service with signature verification failures.
+
+**Root cause:** Auth-service used `HHH_AUTH_JWT_SECRET` while other services expected `JWT_SECRET`. Environment variable naming convention was inconsistent across services.
+
+**Fix:** Standardized all services to use the same JWT secret env var. Updated `docker-compose.yml` files to pass the correct variable name.
+
+**Lesson:** When multiple services share a secret, define the env var name in a single source of truth (e.g., `copilot.instructions.md`) and reference it everywhere.
+
+---
+
+## BUG-013: Ships, Graphs, Routes Services — Missing CORS middleware blocks all frontend requests
+
+**Service:** `hhh-ships-service`, `hhh-graphs-service`, `hhh-routes-service` | **Severity:** High
+
+**Symptom:** Frontend could not reach ships, graphs, or routes APIs. Browser console showed CORS preflight errors.
+
+**Root cause:** These services were scaffolded without `CORSMiddleware` in `main.py`. Only maps, contracts, and commodities had it.
+
+**Fix:** Added `CORSMiddleware` with the standard configuration to all three services' `main.py`.
+
+**Lesson:** When scaffolding a new service, always copy the CORS middleware setup from an existing service. Add a checklist item to the service scaffold template.
+
+---
+
+## BUG-014: All Repos — PR close/reopen breaks GitHub `closingIssuesReferences` linkage
+
+**Scope:** All repos | **Severity:** Medium
+
+**Symptom:** After closing and reopening a PR, the `Closes #N` keyword in the description no longer auto-closes the linked issue when the PR is merged.
+
+**Root cause:** GitHub removes the `closingIssuesReferences` linkage when a PR is closed. Reopening the PR does not restore the linkage, even though the `Closes #N` text is still in the description.
+
+**Fix:** After reopening a PR, edit the description (remove and re-add the `Closes #N` line) to re-establish the linkage. Alternatively, merge and close the issue manually.
+
+**Lesson:** Never close a PR that has `Closes #N` unless you intend to abandon it. If you must close/reopen, always re-edit the description to restore the linkage.
+
+---
+
+## BUG-015: Maps Service — `location_distances` unique index missing `travel_type`
+
+**Service:** `hhh-maps-service` | **PR:** #59 | **Severity:** High
+
+**Symptom:** Maps service container crashed on startup with `DuplicateKeyError` during `seed_distances()`. The seed creates two `LocationDistance` records per pair of locations (one per `travel_type`: `quantum` and `scm`), but the unique index only covered `(from_location_id, to_location_id)`, so the second insert always failed.
+
+**Root cause:** The `LocationDistance` model uses a `travel_type` field to store separate records per travel type, but the unique index in `dependencies.py` was defined as `[("from_location_id", 1), ("to_location_id", 1)]` without including `travel_type`. This diverged from the model's design — the original issue #28 spec had a single-record design with both travel times in one document, but the implementation chose separate records per `travel_type`.
+
+**Fix applied:**
+1. Changed the unique index to `[("from_location_id", 1), ("to_location_id", 1), ("travel_type", 1)]` in `dependencies.py`.
+2. Added a migration step to drop the old index (`from_location_id_1_to_location_id_1`) if it exists before creating the new one.
+3. Updated both integration tests (`test_indexes.py`) and unit tests (`test_dependencies.py`) to expect the new 3-field index.
+
+**Lesson:** When a domain model stores separate records distinguished by a discriminator field (like `travel_type`), the unique index must include that discriminator. Always verify that unique constraints match the actual data cardinality — one record per natural key.
+
+---
+
+## BUG-016: Project Board — PowerShell codepage corrupts GitHub issue bodies (UTF-8 mojibake)
+
+**Scope:** 47 backend issues across 7 repos | **Severity:** Critical
+
+**Symptom:** A PowerShell script that read issue bodies via `gh issue view --json body`, appended text, and wrote them back via `gh issue edit --body-file` caused all Unicode characters to become garbled. Characters like `→`, `—`, `⚡` turned into `├ö├ç├Â`, `ÔÇö`, `ÔåÆ`. Affected 47 backend issues.
+
+**Root cause:** PowerShell's default codepage (`cp1252`) mishandles UTF-8 output from `gh`. When the script piped `gh` output through PowerShell string processing and wrote to a temp file, the UTF-8 bytes were re-encoded through the Windows codepage, producing double-encoded mojibake. The script also had a loop bug that iterated ~95 times instead of 48 (processing some issues twice).
+
+**Fix applied:**
+1. Used GitHub's `userContentEdits` GraphQL API to retrieve the pre-corruption body from each issue's edit history (filtering edits before the corruption timestamp `2026-03-21T20:00:00Z`).
+2. Wrote a Python restoration script (`tmp/restore_issues.py`) that wrote bodies using `open(path, "w", encoding="utf-8", newline="\n")` and restored via `gh issue edit --body-file`.
+3. All 47 issues restored successfully (0 failures). Verified with sampling: proper Unicode characters, no mojibake.
+
+**Lesson:** **Never use PowerShell** for reading/modifying/writing GitHub issue bodies or any UTF-8 content from `gh` CLI. Always use Python with explicit `encoding="utf-8"`. Recovery is possible via the `userContentEdits` GraphQL API which preserves full edit history.
+
+---
+
+## BUG-017: Project Board — `addSubIssue` API auto-adds issues to board without field values
+
+**Scope:** 16 issues across 7 repos | **Severity:** Medium
+
+**Symptom:** After using the `addSubIssue` GraphQL mutation to set blocking relationships between async migration issues and open backend issues, 16 issues appeared on the project board with `Status=Backlog` and no Priority or Complexity set. The user saw unexpected items cluttering the Backlog column.
+
+**Root cause:** The `addSubIssue` API, when linking an issue as a sub-issue of a parent that is on a project board, automatically adds the child issue to the same board if it isn't already there. The auto-added items get the default `Status=Backlog` with no Priority or Complexity. The 16 affected issues were **stale duplicates** — original issues that were never closed when replacement issues (with higher numbers) were created and implemented via PRs.
+
+**Fix applied:**
+1. Verified via `git log --grep` that 11 of 16 had matching squash merge commits in their repos (already implemented).
+2. Confirmed via `gh issue list --state all` that all 16 had a counterpart: either a CLOSED duplicate (implemented via PR) or a properly-configured OPEN duplicate.
+3. Closed all 15 true duplicates as "not planned" with a comment linking to the counterpart (`Duplicate of #N`).
+4. Removed all 15 as sub-issues from their async migration parent issues via `removeSubIssue`.
+5. Removed all 15+1 from the project board via `deleteProjectV2Item`.
+6. Configured the 1 remaining non-duplicate (maps#45) with proper board fields (`Status=Blocked`, `Priority=Medium`, `Complexity=Low`).
+7. Also closed maps#65 (duplicate of maps#66 async migration issue created by error).
+
+**Lesson:** The `addSubIssue` API silently adds child issues to the parent's project board with default field values. Before bulk-adding sub-issue relationships, verify that all target issues are legitimate (not stale duplicates) and expect that they will appear on the board. After bulk operations, audit the board for unexpected entries. Always close original issues when creating replacements.
