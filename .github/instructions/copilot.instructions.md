@@ -31,11 +31,17 @@ The workspace at `hexadian-hauling-helper` is a monorepo with **git submodules**
 | `hhh-frontend` | `Hexadian-Corporation/hhh-frontend` | 3000 | React 19 · TypeScript · Vite 8 | Player-facing frontend |
 | `hhh-backoffice-frontend` | `Hexadian-Corporation/hhh-backoffice-frontend` | 3001 | React 19 · TypeScript · Vite 8 | Admin backoffice |
 
+**Standalone libraries (not submodules):**
+
+| Library | Repo | Packages | Stack | Purpose |
+|---------|------|----------|-------|---------|
+| `hexadian-auth-client` | `Hexadian-Corporation/hexadian-auth-client` | `@hexadian-corporation/auth-core`, `auth-react`, `auth-node`, `auth-angular` | TypeScript · npm workspaces | Auth client SDK — OAuth flow, token storage, React hooks, Node.js middleware |
+
 > **Standalone service (not a submodule):** `hexadian-auth-service` (`Hexadian-Corporation/hexadian-auth-service`) — port 8006, Python · FastAPI · MongoDB. Centralized identity platform: user auth, JWT, RBAC (Groups→Roles→Permissions), RSI verification, authorization code flow. Includes two frontends as subdirectories: `auth-portal` (port 3003) and `auth-backoffice` (port 3002). Runs independently with its own MongoDB instance and docker-compose.
 
 > **Shared library (not a submodule):** `hexadian-auth-common` (`Hexadian-Corporation/hexadian-auth-common`) — pure Python package. Shared JWT validation (`decode_access_token`), `UserContext` dataclass, FastAPI auth dependencies (`JWTAuthDependency`, `require_permission`, `require_any_permission`), and error types. Installed in all H³ backend services via `uv add hexadian-auth-common @ git+https://github.com/Hexadian-Corporation/hexadian-auth-common.git`.
 
-> **Shared library (not a submodule):** `hexadian-auth-client` (`Hexadian-Corporation/hexadian-auth-client`) — TypeScript monorepo (npm workspaces). Auth client SDK for frontend and backend applications. Four packages: `@hexadian-corporation/auth-core` (pure TypeScript, zero framework deps — OAuth client, token storage, JWT decode, auth events), `@hexadian-corporation/auth-react` (React 18/19 integration — `AuthProvider`, `useAuth`, `usePermissions`, `ProtectedRoute`), `@hexadian-corporation/auth-node` (server-side JWT verification, Express middleware, NestJS guards — TypeScript equivalent of `hexadian-auth-common`), and `@hexadian-corporation/auth-angular` (Angular 17+ signals-based `AuthService`, functional guards, `HttpInterceptorFn`). Published to GitHub Packages (`@hexadian-corporation` scope). Will replace inline auth code in all frontends and provide server-side auth for Node.js backends.
+> **Shared library (not a submodule):** `hexadian-auth-client` (`Hexadian-Corporation/hexadian-auth-client`) — TypeScript monorepo (npm workspaces). Auth client SDK for frontend and backend applications. Four packages: `@hexadian-corporation/auth-core` (pure TypeScript, zero framework deps — OAuth client, token storage, JWT decode, auth events), `@hexadian-corporation/auth-react` (React 18/19 integration — `AuthProvider`, `useAuth`, `usePermissions`, `ProtectedRoute`), `@hexadian-corporation/auth-node` (server-side JWT verification, Express middleware, NestJS guards — TypeScript equivalent of `hexadian-auth-common`), and `@hexadian-corporation/auth-angular` (Angular 17+ signals-based `AuthService`, functional guards, `HttpInterceptorFn`). Published to GitHub Packages (`@hexadian-corporation` scope). Both H³ frontends (`hhh-frontend`, `hhh-backoffice-frontend`) use `auth-core` + `auth-react` for all authentication — OAuth flow, token storage, and protected routes.
 
 
 The root `hexadian-hauling-helper` repo (`Hexadian-Corporation/hexadian-hauling-helper`) contains:
@@ -128,6 +134,26 @@ Both frontends share the intended stack (being set up):
 - **shadcn/ui** for component library
 - **lucide-react** for icons
 - API client modules using `fetch` with configurable base URL via `VITE_{SERVICE}_API_URL`
+- **`@hexadian-corporation/auth-core`** — OAuth authorization code flow, token storage, JWT decode, auth events
+- **`@hexadian-corporation/auth-react`** — `AuthProvider`, `useAuth`, `usePermissions`, `ProtectedRoute` (wraps `auth-core` for React 19)
+
+Auth is managed entirely via the `hexadian-auth-client` SDK. Do not implement inline OAuth logic or manual token handling in the frontends — use the SDK hooks and components instead.
+
+### Auth Client SDK — npm Packages
+
+`hexadian-auth-client` (`Hexadian-Corporation/hexadian-auth-client`) is an npm workspaces monorepo published to GitHub Packages under the `@hexadian-corporation` scope.
+
+| Package | Purpose | Used by H³ |
+|---------|---------|-----------|
+| `@hexadian-corporation/auth-core` | Pure TypeScript OAuth client — authorization code flow, PKCE, token storage, JWT decode, auth event bus | ✅ Both frontends |
+| `@hexadian-corporation/auth-react` | React 18/19 integration — `AuthProvider`, `useAuth`, `usePermissions`, `ProtectedRoute` | ✅ Both frontends |
+| `@hexadian-corporation/auth-node` | Server-side JWT verification — Express middleware, NestJS guards (TypeScript equivalent of `hexadian-auth-common`) | ❌ Not used (Python backends use `hexadian-auth-common`) |
+| `@hexadian-corporation/auth-angular` | Angular 17+ integration — signals-based `AuthService`, functional guards, `HttpInterceptorFn` | ❌ Not applicable |
+
+**Installation in H³ frontends:**
+```bash
+npm install @hexadian-corporation/auth-core @hexadian-corporation/auth-react
+```
 
 ### Infrastructure
 
@@ -237,7 +263,7 @@ Unique index on `code`. Case-insensitive index on `name`. TTL application cache 
 
 Handle validation: `^[A-Za-z0-9_-]{3,30}$` (strict, to prevent SSRF).
 
-**JWT protection:** All H³ backend endpoints (except `/health`) require a valid JWT via `hexadian-auth-common` middleware. Both H³ frontends use the redirect auth flow.
+**JWT protection:** All H³ backend endpoints (except `/health`) require a valid JWT via `hexadian-auth-common` middleware. Both H³ frontends handle the full auth lifecycle — redirect flow, token exchange, storage, and refresh — via the `hexadian-auth-client` SDK (`@hexadian-corporation/auth-core` + `@hexadian-corporation/auth-react`).
 
 ## UI Styling
 
