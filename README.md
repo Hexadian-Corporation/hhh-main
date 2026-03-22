@@ -30,7 +30,7 @@ Microservices with hexagonal architecture (Ports & Adapters), each service in it
 
 ## Tech Stack
 
-- **Backend**: Python 3.11+, FastAPI, opyoid, pymongo, pydantic
+- **Backend**: Python 3.11+, FastAPI, opyoid, motor, pydantic
 - **Frontend**: React 19, TypeScript, Vite 8
 - **Database**: MongoDB (database-per-service)
 - **Tooling**: uv, Docker, docker-compose
