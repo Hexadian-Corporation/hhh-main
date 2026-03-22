@@ -153,6 +153,7 @@ services:
       - HHH_ROUTES_SHIPS_SERVICE_URL=http://ships-service:8002
       - HHH_ROUTES_MAPS_SERVICE_URL=http://maps-service:8003
       - HHH_ROUTES_GRAPHS_SERVICE_URL=http://graphs-service:8004
+      - HHH_ROUTES_COMMODITIES_SERVICE_URL=http://commodities-service:8007
     depends_on:
       mongo1:
         condition: service_healthy
@@ -165,6 +166,8 @@ services:
       maps-service:
         condition: service_started
       graphs-service:
+        condition: service_started
+      commodities-service:
         condition: service_started
     networks:
       - hhh-inner-net
