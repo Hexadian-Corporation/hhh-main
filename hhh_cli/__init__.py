@@ -428,6 +428,20 @@ def run_lint() -> None:
     print("All clean!")
 
 
+def smoke() -> None:
+    """Run smoke tests against the live stack.
+
+    Requires all services to be running (start with `uv run hhh up`).
+    Tests auto-skip when services aren't running.
+
+    Usage: uv run hhh smoke
+    """
+    print("=== H³ – Smoke tests (requires running stack) ===\n")
+    code = _run(["uv", "run", "pytest", "tests/smoke/", "-v"], cwd=ROOT)
+    if code != 0:
+        sys.exit(code)
+
+
 def restart(service_name: str) -> None:
     """Rebuild and restart a single service container.
 
@@ -650,6 +664,7 @@ COMMANDS = {
     "test": (run_tests, "Run tests for all services"),
     "lint": (run_lint, "Run linter for all services"),
     "seed": (seed, "Run seed scripts for all services"),
+    "smoke": (smoke, "Run smoke tests against the live stack (requires `uv run hhh up`)"),
 }
 
 
