@@ -72,6 +72,11 @@ services:
         });
         print('Replica set initiated');
       }
+      db.getSiblingDB('hhh_events').events.createIndex(
+        { timestamp: 1 },
+        { expireAfterSeconds: 2592000 }
+      );
+      print('hhh_events TTL index ensured');
       "]
 
   contracts-service:
@@ -220,6 +225,35 @@ services:
     networks:
       - hhh-outer-net
       - hexadian-net
+
+  dataminer-service:
+    build: ./hhh-dataminer
+    ports:
+      - "8008:8008"
+    environment:
+      - HHH_DATAMINER_MAPS_SERVICE_URL=http://maps-service:8003
+      - HHH_DATAMINER_SHIPS_SERVICE_URL=http://ships-service:8002
+      - HHH_DATAMINER_COMMODITIES_SERVICE_URL=http://commodities-service:8007
+      - HHH_DATAMINER_CONTRACTS_SERVICE_URL=http://contracts-service:8001
+      - HHH_DATAMINER_EVENTS_MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&readPreference=nearest
+      - HHH_DATAMINER_EVENTS_DB=hhh_events
+      - HEXADIAN_AUTH_JWT_SECRET=${HEXADIAN_AUTH_JWT_SECRET:-change-me-in-production}
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+      contracts-service:
+        condition: service_started
+      ships-service:
+        condition: service_started
+      maps-service:
+        condition: service_started
+      commodities-service:
+        condition: service_started
+    networks:
+      - hhh-inner-net
+      - hhh-outer-net
 
 volumes:
   mongo1_data:
