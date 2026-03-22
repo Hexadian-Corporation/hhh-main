@@ -114,7 +114,7 @@ src/
 - Mappers are **static classes** (`to_domain`, `to_dto`, `to_document`)
 - DI uses **opyoid** (`Module`, `Injector`, `SingletonScope`)
 - Settings use `pydantic-settings` with env prefix `HHH_{SERVICE_NAME}_` (except auth: `HEXADIAN_AUTH_`)
-- Repositories use **pymongo** directly (no ODM)
+- Repositories use **motor** (async MongoDB driver, no ODM)
 
 **Router patterns (two in use):**
 
