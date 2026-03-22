@@ -12,7 +12,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["hhh_cli"]
 
+[project.optional-dependencies]
+test = ["pytest", "httpx"]
+
 [project.scripts]
 hhh = "hhh_cli:main"
 test = "hhh_cli:run_tests"
 lint = "hhh_cli:run_lint"
+smoke = "hhh_cli:smoke"
