@@ -1,0 +1,50 @@
+[project]
+name = "hhh-events"
+version = "0.1.0"
+description = "Shared MongoDB Change Streams event infrastructure for H³ inter-service communication"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "motor>=3.6,<4",
+    "pydantic>=2.10",
+    "pymongo>=4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "pytest-cov>=6.0",
+    "diff-cover>=9.0",
+    "ruff>=0.9",
+    "testcontainers[mongodb]>=4.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["hhh_events"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["hhh_events"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+]
